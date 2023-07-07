@@ -52,9 +52,9 @@ which we place on the rightmost end of the word.
 
 \medskip
 \mplibcode
-beginfig(4);
-<<Cell Structure Figure>>
-endfig;
+    beginfig(4);
+        <<Cell Structure Figure>>
+    endfig;
 \endmplibcode
 \medskip
 
