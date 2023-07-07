@@ -98,7 +98,7 @@ of the parts. Each of these macros operate on a machine's 64-bit registers
 into one long linked list of cons cells. We keep track of the head of
 this list with the |f| register.
 
-TODO: drawing of free list here
+<<Free List Figure>>
 
 Note that these are really indicies, not pointers. They increase by
 one, not by 8, so we gain an extra 3 bits of address space.
@@ -1435,6 +1435,30 @@ label.bot("1..0" infont "rm-mlmr9",   .5[point 0 of tag,point 1 of tag]);
 
 #+end_src
 
+*** Free List Figure
+#+name: Free List Figure
+#+begin_src metapost :noweb yes
+\medskip\medskip
+\mplibcode
+beginfig(1);
+<<metapost-graph-init>>
+<<make_figure(mem=free-list-memory, positions=free-list-positions)>>
+endfig;
+\endmplibcode
+\medskip\medskip
+#+end_src
+
+#+name: free-list-memory
+| addr | type | head | tail | val |
+|    1 | cons |    0 |    2 |     |
+|    2 | cons |    0 |    3 |     |
+|    3 | cons |    0 |    4 |     |
+|    4 | cons |    0 |    0 |     |
+
+
+#+name: free-list-positions
+| F | 1 | 2 | 3 | 4  |
+
 
 
 *** Validate Cell Implementation
@@ -1889,7 +1913,7 @@ def enumerate_table(table):
 def draw_figure(data):
     arrows = []
     for c, i, j in enumerate_table(data):
-        if c in {'S', 'E', 'C', 'D'}:
+        if c in {'S', 'E', 'C', 'D', 'F'}:
             right = next(d for d in data[j][i+1:] if d)
             arrows.append(f'register("{c}", {i}, {j}, {right});')
             continue
