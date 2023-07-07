@@ -63,7 +63,7 @@ which we place on the rightmost end of the word.
 
 For each cell type we will define macros to create a cell from parts,
 to test whether the cell is of a particular type, and to extract each
-of the parts. Each of these macros operate on a machines registers
+of the parts. Each of these macros operate on a machine's 64-bit registers
 --- they don't affect what is stored in the abstract machine's memory.
            
 @ Numbers. We use 62 bit signed integers. Overflow behavior is undefined
@@ -73,21 +73,26 @@ of the parts. Each of these macros operate on a machines registers
 @d isnumber(c)  ((c & 0b11) == 0b00)
 @d number(i) ((int64_t)(mem[i]) >> 2)
 
-@ Conses.
+@ Conses. We store two 31-bit indicies.
    
 @d mkcons(h, t)   (((cell)h << 33) | (((cell)t & 0x7fffffff) << 2) | 0b01)
 @d iscons(c)    ((c & 0b11) == 0b01)
 @d head(c)      (c >> 33)
 @d tail(c)      ((c >> 2) & 0x7fffffff)
 
-@ Symbols.
+@ Symbols. These are lists of characters where the head is character and
+  the tail is a pointer to the next character. We have 31 bits available
+  for the character and nothing prevents us from stuffing in more than one
+  character. We could for examplee store up to four 7-bit ASCII characters.
    
 @d mksymbol(h, t) ((((cell)h | 0x80000000) << 33) | (((cell)t & 0x7fffffff) << 2) | 0b11)
 @d issymbol(c)  ((c & 0b11) == 0b11)
 
-@<Define Cells@>=
+@ Allocate Cells
+   
+@<Allocate Cells@>=
 
-<<Define Cells>>
+<<Allocate Cells>>
          
 @ Cell Initialization. During initialization we turn all unused memory
 into one long linked list of cons cells. We keep track of the head of
@@ -516,7 +521,7 @@ endfig;
 #include <stdbool.h>
 #include <assert.h>
 @<S.E.C.D. Registers@>;
-@<Define Cells@>;
+@<Allocate Cells@>;
 @<LD Instruction@>;
 @<LDC Instruction@>;
 @<LDF Instruction@>;
@@ -1339,9 +1344,9 @@ https://tug.org/fonts/fontinstall.html
 %%%%%%%%%%% MLModern font changes
 #+end_src
 
-*** Define Cells
+*** Allocate Cells
 
-#+name: Define Cells
+#+name: Allocate Cells
 #+begin_src c
 cell mem[limit];
 index f; // free list
