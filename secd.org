@@ -4,6 +4,8 @@
 @f index int
 @f cell int
 @f int64_t int
+@f uint32_t int
+@f uint64_t int
 
 <<Switch to ML Modern Font>>
 <<TeX Macros>>
@@ -23,25 +25,23 @@ professional programmer who prefers working code and diagrams over
 long prose and unfamiliar mathematical symbols. We also arrange the
 program in a narrative order rather than what is preferable to the
 compiler. The subject was chosen because this is a well-studied
-problem in computer science but isn't well-understood by the general
-programmer xxx.
+problem in computer science but isn't particularly well-understood
+by the average programmer.
 
 This abstract machine's name is an initialism of the four main
 registers: \Stack, \Environment, \Control, and \Dump. The \Stack\
-register points to a parameter or working stack very similar to
+register points to a parameter (or working) stack very similar to
 Forth's. The \Environment\ register points to a stack of variable
 frames -- for lack of a better name -- where each frame contains a
 list of the values that the variables contained at the time of the
-frame's creation. While we call this a stack because of the \LIFO\
-nature of creation and destruction, the values further down the stack
-are still available for use. The \Control\ register points to a list
+frame's creation. The \Control\ register points to a list
 of instructions. The \Dump\ register points to yet another stack, this
 time for saving the values of the \Stack, \Environment, and \Control\
-registers.
+registers while they are being used with different values inside of
+a function call.
 
 @d cell uint64_t
 @d index uint32_t
-@d limit 65536
 
 @<S.E.C.D. Registers@>=
 index s, e, c, d;
@@ -70,7 +70,7 @@ They each follow a similar pattern: mask\rightarrow shift\rightarrow tag.
 @ Numbers. We use 62 bit signed integers. Overflow behavior is undefined
   for now.
    
-@d mknumber(n)    (((uint64_t)n) << 2)
+@d mknumber(n)    (((cell)n) << 2)
 @d isnumber(c)  ((c & 0b11) == 0b00)
 @d number(i) ((int64_t)(mem[i]) >> 2)
 
@@ -90,7 +90,9 @@ They each follow a similar pattern: mask\rightarrow shift\rightarrow tag.
 @d issymbol(c)  ((c & 0b11) == 0b11)
 
 @ Allocate Cells
-   
+
+@d limit 65536
+       
 @<Allocate Cells@>=
 
 <<Allocate Cells>>
