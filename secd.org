@@ -39,8 +39,10 @@ of instructions. The \Dump\ register points to yet another stack, this
 time for saving the values of the \Stack, \Environment, and \Control\
 registers.
 
-@<S.E.C.D. Registers@>=
+@d index uint32_t
+@d limit 65536
 
+@<S.E.C.D. Registers@>=
 index s, e, c, d;
 
 @ Cells. The memory in this machine is divided up into 64-bit tagged
@@ -67,9 +69,7 @@ since we changed from popcons to popc.
 
 \vfil \break
        
-@d index uint32_t
 @d cell uint64_t
-@d limit 65536
    
 @d NIL 0
 @d T 999
