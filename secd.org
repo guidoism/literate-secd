@@ -6,11 +6,9 @@
 @f int64_t int
 
 <<Switch to ML Modern Font>>
-
-\input luamplib.sty
-
 <<TeX Macros>>
       
+\input luamplib.sty
 \tenrm
 
 @* Introduction. The SECD abstract machine was originally described by
