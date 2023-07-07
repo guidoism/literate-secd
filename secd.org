@@ -65,7 +65,7 @@ For each cell type we will define macros to create a cell from parts,
 to test whether the cell is of a particular type, and to extract each
 of the parts. Each of these macros operate on a machine's 64-bit registers
 --- they don't affect what is stored in the abstract machine's memory.
-They each follow a similar pattern: 1. Mask, 2. Shift, Tag.    
+They each follow a similar pattern: mask\rightarrow shift\rightarrow tag.    
            
 @ Numbers. We use 62 bit signed integers. Overflow behavior is undefined
   for now.
