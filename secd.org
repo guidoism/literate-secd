@@ -100,7 +100,7 @@ this list with the |f| register.
 
 <<Free List Figure>>
 
-Note that these are really indicies, not pointers. They increase by
+Note that these are indicies, not pointers. They increase by
 one, not by 8, so we gain an extra 3 bits of address space.
 
 @d NIL 0
