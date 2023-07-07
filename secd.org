@@ -113,7 +113,7 @@ one, not by 8, so we gain an extra 3 bits of address space.
 
 @ Instructions. There are 21 instructions as sumerized by this table.
 We will go through each one describing the operational semantics
-abstractedly and provide examples that we will also use to validate
+abstractly and provide examples that we will also use to validate
 the correctness of this program. Alongside this we will provide the
 implementation for each instruction.
 
