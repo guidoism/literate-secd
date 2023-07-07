@@ -39,6 +39,7 @@ of instructions. The \Dump\ register points to yet another stack, this
 time for saving the values of the \Stack, \Environment, and \Control\
 registers.
 
+@d cell uint64_t
 @d index uint32_t
 @d limit 65536
 
@@ -60,23 +61,29 @@ which we place on the rightmost end of the word.
 \endmplibcode
 \medskip
 
-@ Memory. 
-        
-@d cell uint64_t
+For each cell type we will define macros to create a cell from parts,
+to test whether the cell is of a particular type, and to extract each
+of the parts. Each of these macros operate on a machines registers
+--- they don't affect what is stored in the abstract machine's memory.
+           
+@ Numbers. We use 62 bit signed integers. Overflow behavior is undefined
+  for now.
    
 @d mknumber(n)    (((uint64_t)n) << 2)
-@d isnumber(c)  ((c & 3) == 0)
+@d isnumber(c)  ((c & 0b11) == 0b00)
 @d number(i) ((int64_t)(mem[i]) >> 2)
 
-@d mkcons(h, t)   (((cell)h << 33) | (((cell)t & 0x7fffffff) << 2) | 1)
-@d iscons(c)    ((c & 3) == 1)
+@ Conses.
+   
+@d mkcons(h, t)   (((cell)h << 33) | (((cell)t & 0x7fffffff) << 2) | 0b01)
+@d iscons(c)    ((c & 0b11) == 0b01)
 @d head(c)      (c >> 33)
 @d tail(c)      ((c >> 2) & 0x7fffffff)
+
+@ Symbols.
    
-@d mksymbol(h, t) ((((cell)h | 0x80000000) << 33) | (((cell)t & 0x7fffffff) << 2) | 3)
-@d issymbol(c)  ((c & 3) == 3)
-   
-           
+@d mksymbol(h, t) ((((cell)h | 0x80000000) << 33) | (((cell)t & 0x7fffffff) << 2) | 0b11)
+@d issymbol(c)  ((c & 0b11) == 0b11)
 
 @<Define Cells@>=
 
