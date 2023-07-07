@@ -10,8 +10,8 @@
 
 #+name: weaveit
 #+begin_src sh :results output
-cweave secd3
-luatex secd3
+cweave secd
+luatex secd
 #+end_src
 
 ** Instructions
@@ -1002,7 +1002,7 @@ void leq(void) @+ {
 
 *** Main CWEB File
 
-#+begin_src cweb :noweb yes :tangle secd3.w
+#+begin_src cweb :noweb yes :tangle secd.w
 @f index int
 @f cell int
 @f int64_t int
