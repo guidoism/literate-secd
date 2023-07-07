@@ -60,35 +60,24 @@ which we place on the rightmost end of the word.
 \endmplibcode
 \medskip
 
-The function |addcons| creates a cons with the given head and tail and
-returns the index to the newly allocated cell. |popc| reverses it
---- removing the cons (making it garbage along with anything the head
-pointed to) and returning the tail index. GUIDO: Need to tweak language
-since we changed from popcons to popc.
-
-
-\vfil \break
-       
+@ Memory. 
+        
 @d cell uint64_t
    
-@d NIL 0
-@d T 999
-@d F 998
-   
-@d isnumber(c)  ((c & 3) == 0)
-@d iscons(c)    ((c & 3) == 1)
-@d issymbol(c)  ((c & 3) == 3)
-   
 @d mknumber(n)    (((uint64_t)n) << 2)
+@d isnumber(c)  ((c & 3) == 0)
+@d number(i) ((int64_t)(mem[i]) >> 2)
+
 @d mkcons(h, t)   (((cell)h << 33) | (((cell)t & 0x7fffffff) << 2) | 1)
-@d mksymbol(h, t) ((((cell)h | 0x80000000) << 33) | (((cell)t & 0x7fffffff) << 2) | 3)
-           
+@d iscons(c)    ((c & 3) == 1)
 @d head(c)      (c >> 33)
 @d tail(c)      ((c >> 2) & 0x7fffffff)
-
-@d deref_number_from_cell(c) ((int64_t)c >> 2)
-@d number(i) ((int64_t)(mem[i]) >> 2)
    
+@d mksymbol(h, t) ((((cell)h | 0x80000000) << 33) | (((cell)t & 0x7fffffff) << 2) | 3)
+@d issymbol(c)  ((c & 3) == 3)
+   
+           
+
 @<Define Cells@>=
 
 <<Define Cells>>
@@ -102,6 +91,10 @@ TODO: drawing of free list here
 Note that these are really indicies, not pointers. They increase by
 one, not by 8, so we gain an extra 3 bits of address space.
 
+@d NIL 0
+@d T 999
+@d F 998
+   
 @<Cell Initialization@>=
 
 <<Cell Initialization>>       
@@ -577,6 +570,8 @@ void print_sexp(index i) @+ {
 }
         
 @* Appendix.
+
+@d deref_number_from_cell(c) ((int64_t)c >> 2)
 
 @<Validate Implementation@>=
 
@@ -1351,18 +1346,27 @@ index addcell(cell c) @+ {
     return w;         // Return the location of our new cell
 }
 
-index addcons(index h, index t) { return addcell(mkcons(h, t)); }
-
-#define popfunction(reg) index pop##reg() @+ { \
-    index w = head(mem[reg]); \
-    reg = tail(mem[reg]); \
-    return w; \
+index addcons(index h, index t) @+ {
+    return addcell(mkcons(h, t));
 }
 
-popfunction(s);
-popfunction(c);
-popfunction(d);
+index pops(void) @+ { 
+    index w = head(mem[s]); 
+    s = tail(mem[s]); 
+    return w; 
+}
 
+index popc(void) @+ { 
+    index w = head(mem[c]); 
+    c = tail(mem[c]); 
+    return w; 
+}
+
+index popd(void) @+ { 
+    index w = head(mem[d]); 
+    d = tail(mem[d]); 
+    return w; 
+}
 #+end_src
 
 *** Cell Structure Figure
