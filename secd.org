@@ -1,1005 +1,3 @@
-** Put together everything
-
-#+begin_src elisp 
-(org-babel-tangle)
-(org-sbe weaveit)
-#+end_src
-
-#+RESULTS:
-: nil
-
-#+name: weaveit
-#+begin_src sh :results output
-cweave secd
-luatex secd
-#+end_src
-
-** Instructions
-
-#+name: Instructions
-| Opcode | Name | Action                                            |
-|      1 | LD   | Load variable from the environment                |
-|      2 | LDC  | Load constant                                     |
-|      3 | LDF  | Load function                                     |
-|      4 | AP   | Apply function                                    |
-|      5 | RTN  | Return                                            |
-|      6 | DUM  | Create dummy environment                          |
-|      7 | RAP  | Recursive apply                                   |
-|      8 | SEL  | Select subcontrol                                 |
-|      9 | JOIN | Rejoin main control                               |
-|     10 | CAR  | Take car of item on top of stack                  |
-|     11 | CDR  | Take cdr of item on top of stack                  |
-|     12 | ATOM | Apply atom predicate to top stack item            |
-|     13 | CONS | Form cons of top two stack items                  |
-|     14 | EQ   | Apply eq predicate to top two stack items         |
-|     15 | ADD  | Apply arithmetic operation to top two stack items |
-|     16 | SUB  | Apply arithmetic operation to top two stack items |
-|     17 | MUL  | Apply arithmetic operation to top two stack items |
-|     18 | DIV  | Apply arithmetic operation to top two stack items |
-|     19 | REM  | Apply arithmetic operation to top two stack items |
-|     20 | LEQ  | Apply arithmetic operation to top two stack items |
-|     21 | STOP | Stop                                              |
-
-** Validation Data
-
-#+name: ld-memory
-| addr | type | head | tail | val |
-|    7 | atom |      |      | LD  |
-|    8 | cons |    7 |   12 |     |
-|    9 | atom |      |      | 0   |
-|   10 | cons |    9 |   11 |     |
-|   11 | atom |      |      | 1   |
-|   12 | cons |   10 |   14 |     |
-|   13 | atom |      |      | RTN |
-|   14 | cons |   13 |    0 |     |
-|   20 | atom |      |      | B   |
-|   21 | cons |   20 |   23 |     |
-|   22 | atom |      |      | C   |
-|   23 | cons |   22 |    0 |     |
-|   24 | cons |   21 |   29 |     |
-|   25 | atom |      |      | D   |
-|   26 | cons |   25 |   28 |     |
-|   27 | atom |      |      | E   |
-|   28 | cons |   27 |    0 |     |
-|   29 | cons |   26 |    0 |     |
-|   36 | cons |   24 |    0 |     |
-
-    e = 36;
-    c = 8;
-    f = 40;
-
-#+name: ld-before
-| E | 36 |    |    |    |
-|   | 24 |    | 29 |    |
-|   | 21 | 23 | 26 | 28 |
-|   | 20 | 22 | 25 | 27 |
-| C |  8 | 12 |    | 14 |
-|   |  7 | 10 | 11 | 13 |
-|   |    |  9 |    |    |
-
-
-#+name: ld-after
-|   |   |
-|   |   |
-
-#+name: ldf-memory
-| addr | type | head | tail | val |
-|    0 | cons |    0 |    0 |     |
-|    1 | cons |    2 |    0 |     |
-|    2 | atom |      |      |   0 |
-|    3 | cons |    6 |    5 |     |
-|    5 | cons |    8 |    0 |     |
-|    6 | cons |    9 |    7 |     |
-|    7 | cons |   10 |    0 |     |
-|    8 | cons |   11 |    0 |     |
-|    9 | atom |      |      |   3 |
-|   10 | atom |      |      |   7 |
-|   11 | atom |      |      |   A |
-|   12 | cons |   19 |   13 |     |
-|   13 | cons |   20 |   16 |     |
-|   16 | cons |   23 |   17 |     |
-|   17 | cons |   24 |    0 |     |
-|   19 | atom |      |      | LDF |
-|   20 | cons |   27 |   21 |     |
-|   21 | cons |   28 |   22 |     |
-|   22 | cons |   29 |    0 |     |
-|   23 | atom |      |      |  LD |
-|   24 | cons |   31 |    0 |     |
-|   27 | atom |      |      |  LD |
-|   28 | cons |   35 |   29 |     |
-|   29 | atom |      |      | RTN |
-|   31 | cons |   38 |   32 |     |
-|   32 | atom |      |      |   1 |
-|   35 | cons |   42 |   36 |     |
-|   36 | atom |      |      |   1 |
-|   38 | atom |      |      |   0 |
-|   42 | atom |      |      |   1 |
-|  100 | cons |  101 |    1 |     |
-|  101 | cons |   20 |    3 |     |
-
-#+name: ldf-before
-| S |  1 |    |    |    |    |    |    |
-|   |  2 |    |    |    |    |    |    |
-| E |  3 |    |  5 |    |    |    |    |
-|   |  6 |  7 |  8 |    |    |    |    |
-|   |  9 | 10 | 11 |    |    |    |    |
-| C | 12 | 13 |    |    | 16 | 17 |    |
-|   | 19 | 20 | 21 | 22 | 23 | 24 |    |
-|   |    | 27 | 28 | 29 |    | 31 | 32 |
-|   |    |    | 35 | 36 |    | 38 |    |
-|   |    |    | 42 |    |    |    |    |
-
-#+name: ldf-after
-| S |  100 |    |    |   |    |  1 |    |
-|   | 101* |    |    |   |    |  2 |    |
-|   |   20 | 21 | 22 | E |  3 |    |  5 |
-|   |   27 | 28 | 29 |   |  6 |  7 |  8 |
-|   |      | 35 | 36 |   |  9 | 10 | 11 |
-|   |      | 42 |    |   |    |    |    |
-|   |      |    |    | C | 16 | 17 |    |
-|   |      |    |    |   | 23 | 24 |    |
-|   |      |    |    |   |    | 31 | 32 |
-|   |      |    |    |   |    | 38 |    |
-|   |      |    |    |   |    |    |    |
-
-#+name: ap-before-after-sexp
-| (((LD (1.1) LD (0.0) ADD RTN).((3 7) (A))) (6) 0) | ((2 B))         | (AP STOP)                   | d                      |
-| NIL                                               | ((6) (3 7) (A)) | (LD (1.1) LD (0.0) ADD RTN) | ((0) ((2 B)) (STOP).d) |
-
-#+name: ap-memory
-| addr | type | head | tail |  val |
-|    3 | cons |    4 |    5 |      |
-|    4 | atom |      |      |   LD |
-|    5 | cons |    6 |    7 |      |
-|    6 | cons |   15 |   16 |      |
-|    7 | cons |    8 |    9 |      |
-|    8 | atom |      |      |   LD |
-|    9 | cons |   10 |   11 |      |
-|   10 | cons |   17 |   18 |      |
-|   11 | cons |   12 |   13 |      |
-|   12 | atom |      |      |  ADD |
-|   13 | cons |   14 |    0 |      |
-|   14 | atom |      |      |  RTN |
-|   15 | atom |      |      |    1 |
-|   16 | atom |      |      |    1 |
-|   17 | atom |      |      |    0 |
-|   18 | atom |      |      |    0 |
-|   20 | cons |   22 |   21 |      |
-|   21 | cons |   24 |    0 |      |
-|   22 | cons |   25 |   23 |      |
-|   23 | cons |   26 |    0 |      |
-|   24 | cons |   27 |    0 |      |
-|   25 | atom |      |      |    3 |
-|   26 | atom |      |      |    7 |
-|   27 | atom |      |      |    A |
-|   30 | cons |   31 |    0 |      |
-|   31 | atom |      |      |    6 |
-|   40 | cons |    3 |   41 |      |
-|   41 | cons |   20 |   42 |      |
-|   42 | cons |   30 |   52 |      |
-|   43 | cons |   44 |    0 |      |
-|   44 | cons |   46 |   45 |      |
-|   45 | cons |   47 |    0 |      |
-|   46 | atom |      |      |    2 |
-|   47 | atom |      |      |    B |
-|   48 | cons |   50 |   49 |      |
-|   49 | cons |   51 |    0 |      |
-|   50 | atom |      |      |   AP |
-|   51 | atom |      |      | STOP |
-|   52 | cons |   53 |    0 |      |
-|   53 | atom |      |      |    0 |
-|   60 | cons |   30 |   20 |      |
-|   61 | cons |   52 |   62 |      |
-|   62 | cons |   43 |   63 |      |
-|   63 | cons |   49 |    0 |      |
-
-#+name: ap-before
-| S | 40 | 41 |    |    | 42 | 52 |  E | 43 |    | C | 48 | 49 |
-|   |    | 20 |    | 21 | 30 | 53 |    | 44 | 45 |   | 50 | 51 |
-|   |    | 22 | 23 | 24 | 31 |    |    | 46 | 47 |   |    |    |
-|   |    | 25 | 26 | 27 |    |    |    |    |    |   |    |    |
-|   |  3 |  5 |    |  7 |  9 |    | 11 | 13 |    |   |    |    |
-|   |  4 |  6 | 16 |  8 | 10 | 18 | 12 | 14 |    |   |    |    |
-|   |    | 15 |    |    | 17 |    |    |    |    |   |    |    |
-
-#+name: ap-after
-|   |    |    |    |    |  D | 61 | 62 |    | 63 |
-|   |    |    |    |    |    | 52 | 43 |    | 49 |
-| E | 60 | 20 |    | 21 |    | 53 | 44 | 45 | 51 |
-|   | 30 | 22 | 23 | 24 |    |    | 46 | 47 |    |
-|   | 31 | 25 | 26 | 27 |    |    |    |    |    |
-| C |  3 |  5 |    |  7 |  9 |    | 11 | 13 |    |
-|   |  4 |  6 | 16 |  8 | 10 | 18 | 12 | 14 |    |
-|   |    | 15 |    |    | 17 |    |    |    |    |
-
-#+name: rtn-before-after-sexp
-| (13)   | ((6) (3 7) (A)) | (RTN)  | ((0) ((2 B)) (STOP).d) |
-| (13 0) | ((2 B))         | (STOP) | d                      |
-
-#+name: rtn-memory
-| addr | type | head | tail |  val |
-|   13 | cons |   14 |    0 |      |
-|   14 | atom |      |      |  RTN |
-|   20 | cons |   22 |   21 |      |
-|   21 | cons |   24 |    0 |      |
-|   22 | cons |   25 |   23 |      |
-|   23 | cons |   26 |    0 |      |
-|   24 | cons |   27 |    0 |      |
-|   25 | atom |      |      |    3 |
-|   26 | atom |      |      |    7 |
-|   27 | atom |      |      |    A |
-|   30 | cons |   31 |    0 |      |
-|   31 | atom |      |      |    6 |
-|   40 | cons |    3 |   41 |      |
-|   41 | cons |   20 |   42 |      |
-|   42 | cons |   30 |   52 |      |
-|   43 | cons |   44 |    0 |      |
-|   44 | cons |   46 |   45 |      |
-|   45 | cons |   47 |    0 |      |
-|   46 | atom |      |      |    2 |
-|   47 | atom |      |      |    B |
-|   48 | cons |   50 |   49 |      |
-|   49 | cons |   51 |    0 |      |
-|   50 | atom |      |      |   AP |
-|   51 | atom |      |      | STOP |
-|   52 | cons |   53 |    0 |      |
-|   53 | atom |      |      |    0 |
-|   60 | cons |   30 |   20 |      |
-|   61 | cons |   52 |   62 |      |
-|   62 | cons |   43 |   63 |      |
-|   63 | cons |   49 |    0 |      |
-|   70 | cons |   71 |    0 |      |
-|   71 | atom |      |      |   13 |
-|   72 | cons |   71 | 52   |      |
-
-#+name: rtn-before
-| S | 70 |    |    |    | D | 61 | 62 |    | 63 |
-|   | 71 |    |    |    |   | 52 | 43 |    | 49 |
-| E | 60 | 20 |    | 21 |   | 53 | 44 | 45 | 51 |
-|   | 30 | 22 | 23 | 24 |   |    | 46 | 47 |    |
-|   | 31 | 25 | 26 | 27 |   |    |    |    |    |
-| C | 13 |    |    |    |   |    |    |    |    |
-|   | 14 |    |    |    |   |    |    |    |    |
-|   |    |    |    |    |   |    |    |    |    |
-
-#+name: rtn-after
-| S | 72 | 52 | E | 43 |    | C | 49 |
-|   | 71 | 53 |   | 44 | 45 |   | 51 |
-|   |    |    |   | 46 | 47 |   |    |
-
-#+name: car-memory
-| addr | type | head | tail | val |
-|    1 | cons |    2 |    0 |     |
-|    2 | atom |      |      | CAR |
-|    3 | cons |    4 |    5 |     |
-|    4 | cons |    7 |    8 |     |
-|    5 | cons |    6 |    0 |     |
-|    6 | atom |      |      | C   |
-|    7 | atom |      |      | A   |
-|    8 | atom |      |      | B   |
-|    9 | cons |    7 |    5 |     |
-
-#+name: car-before
-| S | 3 |   | 5 | C | 1 |
-|   | 4 | 8 | 6 |   | 2 |
-|   | 7 |   |   |   |   |
-
-#+name: car-after
-| S | 9 | 5 | 
-|   | 7 | 6 | 
-
-#+name: cdr-memory
-| addr | type | head | tail | val |
-|    1 | cons |    2 |    0 |     |
-|    2 | atom |      |      | CDR |
-|    3 | cons |    4 |    5 |     |
-|    4 | cons |    7 |    8 |     |
-|    5 | cons |    6 |    0 |     |
-|    6 | atom |      |      | C   |
-|    7 | atom |      |      | A   |
-|    8 | atom |      |      | B   |
-|    9 | cons |    8 |    5 |     |
-
-#+name: cdr-before
-| S | 3 |   | 5 | C | 1 |
-|   | 4 | 8 | 6 |   | 2 |
-|   | 7 |   |   |   |   |
-
-#+name: cdr-after
-| S | 9 | 5 |
-|   | 8 | 6 |
-
-#+name: atom-memory
-| addr | type   | head | tail | val  |
-|    1 | cons   |    2 |    0 |      |
-|    2 | atom   |      |      | ATOM |
-|    3 | cons   |    4 |    5 |      |
-|    4 | cons   |    7 |    8 |      |
-|    5 | cons   |    6 |    0 |      |
-|    6 | atom   |      |      | C    |
-|    7 | atom   |      |      | A    |
-|    8 | atom   |      |      | B    |
-|    9 | cons   |   10 |    5 |      |
-|   10 | symbol |      |    0 | #f   |
-
-#+name: atom-before
-| S | 3 |   | 5 | C | 1 |
-|   | 4 | 8 | 6 |   | 2 |
-|   | 7 |   |   |   |   |
-
-#+name: atom-after
-| S |  9 | 5 |
-|   | 10 | 6 |
-
-#+name: cons-memory
-| addr | type | head | tail | val  |
-|    1 | cons |    2 |    0 |      |
-|    2 | atom |      |      | CONS |
-|    3 | cons |    6 |    4 |      |
-|    4 | cons |    7 |    5 |      |
-|    5 | cons |    8 |    0 |      |
-|    6 | atom |      |      | A    |
-|    7 | atom |      |      | B    |
-|    8 | atom |      |      | C    |
-|   10 | cons |    6 |    7 |      |
-|   11 | cons |   10 |    5 |      |
-
-#+name: cons-before
-| S | 3 | 4 | 5 | C | 1 |
-|   | 6 | 7 | 8 |   | 2 |
-
-#+name: cons-after
-| S | 11 |   | 5 |
-|   | 10 | 7 | 8 |
-|   |  6 |   |   |
-
-#+name: eq-memory
-| addr | type | head | tail | val |
-|   21 | cons |   22 |   23 |     |
-|   22 | atom |      |      | EQ  |
-|   23 | cons |   24 |    0 |     |
-|   24 | atom |      |      | EQ  |
-|    3 | cons |    6 |    4 |     |
-|    4 | cons |    7 |    5 |     |
-|    5 | cons |    8 |    0 |     |
-|    6 | atom |      |      | 2   |
-|    7 | atom |      |      | 2   |
-|    8 | atom |      |      | 2   |
-|   10 | atom |      |      | t   |
-|   11 | cons |   10 |    5 |     |
-
-#+name: eq-before
-| S | 3 | 4 | 5 | C | 21 | 23 |
-|   | 6 | 7 | 8 |   | 22 | 24 |
-
-#+name: eq-after
-| S | 11 | 5 | C | 23 |
-|   | 10 | 8 |   | 24 |
-
-
-#+name: add-memory
-| addr | type | head | tail | val |
-|   21 | cons |   22 |    0 |     |
-|   22 | atom |      |      | ADD |
-|    3 | cons |    6 |    4 |     |
-|    4 | cons |    7 |    0 |     |
-|    6 | atom |      |      |   5 |
-|    7 | atom |      |      |   7 |
-|   10 | atom |      |      |  13 |
-|   11 | cons |   10 |    0 |     |
-
-#+name: add-before
-| S | 3 | 4 | C | 21 |
-|   | 6 | 7 |   | 22 |
-
-#+name: add-after
-| S | 11 |   |
-|   | 10 |   |
-
-#+name: sub-memory
-| addr | type | head | tail | val |
-|   21 | cons |   22 |    0 |     |
-|   22 | atom |      |      | SUB |
-|    3 | cons |    6 |    4 |     |
-|    4 | cons |    7 |    0 |     |
-|    6 | atom |      |      |   5 |
-|    7 | atom |      |      |   7 |
-|   10 | atom |      |      |   2 |
-|   11 | cons |   10 |    0 |     |
-
-#+name: sub-before
-| S | 3 | 4 | C | 21 |
-|   | 6 | 7 |   | 22 |
-
-#+name: sub-after
-| S | 11 |   |
-|   | 10 |   |
-
-#+name: mul-memory
-| addr | type | head | tail | val |
-|   21 | cons |   22 |    0 |     |
-|   22 | atom |      |      | MUL |
-|    3 | cons |    6 |    4 |     |
-|    4 | cons |    7 |    0 |     |
-|    6 | atom |      |      |   5 |
-|    7 | atom |      |      |   7 |
-|   10 | atom |      |      |  35 |
-|   11 | cons |   10 |    0 |     |
-
-#+name: mul-before
-| S | 3 | 4 | C | 21 |
-|   | 6 | 7 |   | 22 |
-
-#+name: mul-after
-| S | 11 |   |
-|   | 10 |   |
-
-#+name: div-memory
-| addr | type | head | tail | val |
-|   21 | cons |   22 |    0 |     |
-|   22 | atom |      |      | DIV |
-|    3 | cons |    6 |    4 |     |
-|    4 | cons |    7 |    0 |     |
-|    6 | atom |      |      |   5 |
-|    7 | atom |      |      |   7 |
-|   10 | atom |      |      |   1 |
-|   11 | cons |   10 |    0 |     |
-
-#+name: div-before
-| S | 3 | 4 | C | 21 |
-|   | 6 | 7 |   | 22 |
-
-#+name: div-after
-| S | 11 |   |
-|   | 10 |   |
-
-#+name: rem-memory
-| addr | type | head | tail | val |
-|   21 | cons |   22 |    0 |     |
-|   22 | atom |      |      | REM |
-|    3 | cons |    6 |    4 |     |
-|    4 | cons |    7 |    0 |     |
-|    6 | atom |      |      |   5 |
-|    7 | atom |      |      |   7 |
-|   10 | atom |      |      |   2 |
-|   11 | cons |   10 |    0 |     |
-
-#+name: rem-before
-| S | 3 | 4 | C | 21 |
-|   | 6 | 7 |   | 22 |
-
-#+name: rem-after
-| S | 11 |   |
-|   | 10 |   |
-
-#+name: leq-memory
-| addr | type | head | tail | val |
-|   21 | cons |   22 |    0 |     |
-|   22 | atom |      |      | LEQ |
-|    3 | cons |    6 |    4 |     |
-|    4 | cons |    7 |    0 |     |
-|    6 | atom |      |      |   5 |
-|    7 | atom |      |      |   7 |
-|   10 | atom |      |      |   f |
-|   11 | cons |   10 |    0 |     |
-
-#+name: leq-before
-| S | 3 | 4 | C | 21 |
-|   | 6 | 7 |   | 22 |
-
-#+name: leq-after
-| S | 11 |   |
-|   | 10 |   |
-
-
-** CWEB File
-
-*** Font Stuff
-
-https://ctan.math.utah.edu/ctan/tex-archive/fonts/mlmodern/doc/mlmodern.pdf
-Map files: http://www.readytext.co.uk/?cat=30
-https://www.tug.org/texlive/doc/updmap.html
-https://tug.org/fonts/fontinstall.html
-
-#+name: Switch to ML Modern Font
-#+begin_src tex
-%%%%%%%%%%% MLModern font changes
-\font\tenrm=rm-mlmr10 % roman text
-\font\preloaded=rm-mlmr9
-\font\preloaded=rm-mlmr8
-\font\sevenrm=rm-mlmr7
-\font\preloaded=rm-mlmr6
-\font\fiverm=rm-mlmr5
-\font\teni=mlmmi10 % math italic
-\font\preloaded=mlmmi9
-\font\preloaded=mlmmi8
-\font\seveni=mlmmi7
-\font\preloaded=mlmmi6
-\font\fivei=mlmmi5
-\font\tensy=mlmsy10 % math symbols
-\font\preloaded=mlmsy9
-\font\preloaded=mlmsy8
-\font\sevensy=mlmsy7
-\font\preloaded=mlmsy6
-\font\fivesy=mlmsy5
-\font\tenex=mlmex10 % math extension
-\font\preloaded=rm-mlmss10 % sans serif
-\font\preloaded=rm-mlmsso10 % sans serif italic
-\font\tenbf=rm-mlmbx10 % boldface extended
-\font\preloaded=rm-mlmbx9
-\font\preloaded=rm-mlmbx8
-\font\sevenbf=rm-mlmbx7
-\font\preloaded=rm-mlmbx6
-\font\fivebf=rm-mlmbx5
-\font\tentt=rm-mlmtt10 % typewriter
-\font\preloaded=rm-mlmtt9
-\font\preloaded=rm-mlmtt8
-\font\preloaded=rm-mlmtto10 % slanted typewriter
-\font\tensl=rm-mlmro10 % slanted roman
-\font\preloaded=rm-mlmro9
-\font\preloaded=rm-mlmro8
-\font\tenit=rm-mlmri10 % text italic
-\font\preloaded=rm-mlmri9
-\font\preloaded=rm-mlmri8
-\font\preloaded=rm-mlmri7
-\font\preloaded=rm-mlmu10 % unslanted text italic
-\font\preloaded=mlmmib10 % bold math italic
-\font\preloaded=mlmbsy10 % bold math symbols
-\font\preloaded=rm-mlmcsc10 % caps and small caps
-\font\preloaded=rm-mlmr7 scaled \magstep4 % for titles
-\font\preloaded=rm-mlmtt10 scaled \magstep2
-\font\preloaded=rm-mlmssbx10 scaled \magstep2
-\let\preloaded=\undefined % preloaded fonts must be declared anew later.
-\skewchar\teni='177 \skewchar\seveni='177 \skewchar\fivei='177
-\skewchar\tensy='60 \skewchar\sevensy='60 \skewchar\fivesy='60
-\textfont0=\tenrm \scriptfont0=\sevenrm \scriptscriptfont0=\fiverm
-\textfont1=\teni \scriptfont1=\seveni \scriptscriptfont1=\fivei
-\textfont2=\tensy \scriptfont2=\sevensy \scriptscriptfont2=\fivesy
-\textfont3=\tenex \scriptfont3=\tenex \scriptscriptfont3=\tenex
-\newfam\itfam \def\it{\fam\itfam\tenit} % \it is family 4
-\textfont\itfam=\tenit
-\newfam\slfam \def\sl{\fam\slfam\tensl} % \sl is family 5
-\textfont\slfam=\tensl
-\newfam\bffam \def\bf{\fam\bffam\tenbf} % \bf is family 6
-\textfont\bffam=\tenbf \scriptfont\bffam=\sevenbf
-\scriptscriptfont\bffam=\fivebf
-\newfam\ttfam \def\tt{\fam\ttfam\tentt} % \tt is family 7
-\textfont\ttfam=\tentt
-\font\ninerm=rm-mlmr9 % cmr9
-\font\eightrm=rm-mlmr8 % cmr8
-\font\sevenrm=rm-mlmr7 % cmr7
-\font\titlefont=rm-mlmr7 scaled\magstep4 % title on the contents page
-%\font\ttitlefont=cmtt10 scaled\magstep2 % typewriter type in title
-%\font\tentex=cmtex10 % TeX extended character set (used in strings)
-%%%%%%%%%%% MLModern font changes
-#+end_src
-
-*** Define Cells
-
-#+name: Define Cells
-#+begin_src c
-cell mem[limit];
-index f; // free list
-
-index addcell(cell c) @+ {
-    index w = f;      // Get the next free cell index
-    f = tail(mem[f]); // Remove it from the free list
-    mem[w] = c;       // Put our newly created cell into our allocated slot
-    return w;         // Return the location of our new cell
-}
-
-index addcons(index h, index t) { return addcell(mkcons(h, t)); }
-
-#define popfunction(reg) index pop##reg() @+ { \
-    index w = head(mem[reg]); \
-    reg = tail(mem[reg]); \
-    return w; \
-}
-
-popfunction(s);
-popfunction(c);
-popfunction(d);
-
-#+end_src
-
-*** Cell Structure Figure
-
-#+name: Cell Structure Figure
-#+begin_src metapost
-u = 1mm;
-x := 0;
-y := 0;
-path car, cdr, tag;
-car := ((0,0)--(31u,0)--(31u,4u)--(0,4u)--cycle) shifted (0,y);
-cdr := ((0,0)--(31u,0)--(31u,4u)--(0,4u)--cycle) shifted (31u,y);
-tag := ((0,0)--(6u,0)--(6u,4u)--(0,4u)--cycle) shifted (62u,y);
-draw car;
-draw cdr;
-draw tag;
-label.lft("Cons" infont "rm-mlmr9", .5[point 0 of car,point 3 of car]);
-label.top("car" infont "rm-mlmri9", .5[point 0 of car,point 1 of car]);
-label.bot("63..34" infont "rm-mlmr9",  .5[point 0 of car,point 1 of car]);
-label.top("cdr" infont "rm-mlmri9", .5[point 0 of cdr,point 1 of cdr]);
-label.bot("33..2" infont "rm-mlmr9",  .5[point 0 of cdr,point 1 of cdr]);
-label.top("01" infont "rm-mlmtt8", .5[point 0 of tag,point 1 of tag]);
-label.bot("1..0" infont "rm-mlmr9",   .5[point 0 of tag,point 1 of tag]);
-
-x := 0;
-
-y := -10u;
-path number;
-number := ((0,0)--(62u,0)--(62u,4u)--(0,4u)--cycle) shifted (0,y);
-tag := ((0,0)--(6u,0)--(6u,4u)--(0,4u)--cycle) shifted (62u,y);
-draw number;
-draw tag;
-label.lft("Number" infont "rm-mlmr9", .5[point 0 of number,point 3 of number]);
-label.top("car" infont "rm-mlmri9", .5[point 0 of number,point 1 of number]);
-label.bot("63..2" infont "rm-mlmr9",  .5[point 0 of number,point 1 of number]);
-label.top("00" infont "rm-mlmtt8", .5[point 0 of tag,point 1 of tag]);
-label.bot("1..0" infont "rm-mlmr9",   .5[point 0 of tag,point 1 of tag]);
-
-x := 85u;
-y := 0;
-car := ((0,0)--(31u,0)--(31u,4u)--(0,4u)--cycle) shifted (x,y);
-cdr := ((0,0)--(31u,0)--(31u,4u)--(0,4u)--cycle) shifted (x+31u,y);
-tag := ((0,0)--(6u,0)--(6u,4u)--(0,4u)--cycle) shifted (x+62u,y);
-draw car;
-draw cdr;
-draw tag;
-label.lft("Symbol" infont "rm-mlmr9", .5[point 0 of car,point 3 of car]);
-label.top("char" infont "rm-mlmri9", .5[point 0 of car,point 1 of car]);
-label.bot("63..34" infont "rm-mlmr9",  .5[point 0 of car,point 1 of car]);
-label.top("next" infont "rm-mlmri9", .5[point 0 of cdr,point 1 of cdr]);
-label.bot("33..2" infont "rm-mlmr9",  .5[point 0 of cdr,point 1 of cdr]);
-label.top("11" infont "rm-mlmtt8", .5[point 0 of tag,point 1 of tag]);
-label.bot("1..0" infont "rm-mlmr9",   .5[point 0 of tag,point 1 of tag]);
-
-#+end_src
-
-
-
-*** Validate Cell Implementation
-
-| tag a | tag b | type                  |
-|     0 |     0 | 62 bit signed integer |
-|     1 |     0 | 7 bytes of UTF-8?     |
-|     0 |     1 | cons cell             |
-|     1 |     1 | symbol head?          |
-
-The most positive number has a 0 in the most significant position and
-1's elsewhere: 01…1112 = 2N−1 − 1. The most negative number has a 1 in
-the most significant position and 0's elsewhere: 10…0002 = −2N−1.
-
-#+begin_src python :results output :var cons_examples=cons_examples :var number_examples=number_examples
-import bitstring
-#print('0'*31 + '1'*31)
-#print('0'*62)
-#print('1'*62)
-#print(bitstring.Bits(bin='0b01111111111111111111111111111111111111111111111111111111111111', length=62).int)
-#print(bitstring.Bits(bin='0b10000000000000000000000000000000000000000000000000000000000000', length=62).int)
-#print(bitstring.Bits(int=2305843009213693952, length=63).bin)
-for head, tail, cell, notes in cons_examples[1:]:
-    cell = bitstring.Bits(bin=cell.replace(' ', ''), length=64).hex
-    print(f'    assert(mkcons({head}, {tail}) == 0x{cell}); // {notes}')
-
-for vin, vout, cell, notes in number_examples[1:]:
-    cell = bitstring.Bits(bin=cell.replace(' ', ''), length=64).hex
-    print(f'    assert(mknumber({vin}) == 0x{cell} && "{notes}");')
-    print(f'    assert(deref_number_from_cell(mknumber({vin})) == {vout} && "{notes}");')
-#+end_src
-
-#+RESULTS:
-#+begin_example
-    assert(mkcons(0, 0xffff'ffff) == 0x00000001fffffffd); // Numbers are truncated to 31 bits
-    assert(mkcons(0xffff'ffff, 0) == 0xfffffffe00000001); // Numbers are truncated to 31 bits
-    assert(mknumber(0) == 0x0000000000000000 && "Zero");
-    assert(deref_number_from_cell(mknumber(0)) == 0 && "Zero");
-    assert(mknumber(-1) == 0xfffffffffffffffc && "Negative numbers are represeted properly");
-    assert(deref_number_from_cell(mknumber(-1)) == -1 && "Negative numbers are represeted properly");
-    assert(mknumber(2305843009213693951) == 0x7ffffffffffffffc && "Most positive number");
-    assert(deref_number_from_cell(mknumber(2305843009213693951)) == 2305843009213693951 && "Most positive number");
-    assert(mknumber(-2305843009213693952) == 0x8000000000000000 && "Most negative number");
-    assert(deref_number_from_cell(mknumber(-2305843009213693952)) == -2305843009213693952 && "Most negative number");
-    assert(mknumber(2305843009213693952) == 0x8000000000000000 && "Most positive number + 1 gets truncated");
-    assert(deref_number_from_cell(mknumber(2305843009213693952)) == -2305843009213693952 && "Most positive number + 1 gets truncated");
-#+end_example
-
-#+name: cons_examples
-| Head        | Tail        | Cell                                                                | Notes                            |
-| 0           | 0xffff'ffff | 0000000000000000000000000000000 1111111111111111111111111111111 01  | Numbers are truncated to 31 bits |
-| 0xffff'ffff | 0           | 1111111111111111111111111111111 0000000000000000000000000000000 01  | Numbers are truncated to 31 bits |
-
-#+name: number_examples
-|             Value In |            Value Out | Cell                                                              | Notes                                    |
-|                    0 |                    0 | 00000000000000000000000000000000000000000000000000000000000000 00 | Zero                                     |
-|                   -1 |                   -1 | 11111111111111111111111111111111111111111111111111111111111111 00 | Negative numbers are represeted properly |
-|  2305843009213693951 |  2305843009213693951 | 01111111111111111111111111111111111111111111111111111111111111 00 | Most positive number                     |
-| -2305843009213693952 | -2305843009213693952 | 10000000000000000000000000000000000000000000000000000000000000 00 | Most negative number                     |
-|  2305843009213693952 | -2305843009213693952 | 10000000000000000000000000000000000000000000000000000000000000 00 | Most positive number + 1 gets truncated  |
-
-#+name: Validate Cell Implementation
-#+begin_src c
-// TODO: make this invisible to cweave and add table of same info
-void validate_cell_implementation(void) @+ {
-    assert(iscons(mkcons(0, 0)));
-    assert(isnumber(mknumber(0)));
-    assert(issymbol(mksymbol('A', 0)));
-    ///////////////////
-    assert(mkcons(0, 0xffff'ffff) == 0x00000001fffffffd); // Numbers are truncated to 31 bits
-    assert(mkcons(0xffff'ffff, 0) == 0xfffffffe00000001); // Numbers are truncated to 31 bits
-    assert(mknumber(0) == 0x0000000000000000 && "Zero");
-    assert(deref_number_from_cell(mknumber(0)) == 0 && "Zero");
-    assert(mknumber(-1) == 0xfffffffffffffffc && "Negative numbers are represeted properly");
-    assert(deref_number_from_cell(mknumber(-1)) == -1 && "Negative numbers are represeted properly");
-    assert(mknumber(2305843009213693951) == 0x7ffffffffffffffc && "Most positive number");
-    assert(deref_number_from_cell(mknumber(2305843009213693951)) == 2305843009213693951 && "Most positive number");
-    assert(mknumber(-2305843009213693952) == 0x8000000000000000 && "Most negative number");
-    assert(deref_number_from_cell(mknumber(-2305843009213693952)) == -2305843009213693952 && "Most negative number");
-    assert(mknumber(2305843009213693952) == 0x8000000000000000 && "Most positive number + 1 gets truncated");
-    assert(deref_number_from_cell(mknumber(2305843009213693952)) == -2305843009213693952 && "Most positive number + 1 gets truncated");
-}
-#+end_src
-
-*** Dump Cells Implementation
-
-#+begin_src c
-void dump_sexp_r(index start) @+ {
-    index i = start;
-    if (i && i < 1010) {
-        cell c = mem[i];
-        if (cons(c)) {
-            printf("%u [label=\"<car> %llu | <cdr> %llu\"];\n", i, head(c), tail(c));
-            if (head(c)) {
-                printf("%d:car->%llu;\n", i, head(c));
-                dump_sexp_r(head(c));
-            }
-            if (tail(c)) {
-                printf("%d:cdr->%llu;\n", i, tail(c));
-                dump_sexp_r(tail(c));
-            }
-        }
-        else if (isnumber(c)) {
-            printf("%u [label=\"%lld\" shape=\"doublecircle\"];\n", i, number(c));
-        }
-    }
-}
-
-void dump_sexp(index start) {
-    printf("digraph structs { node [shape=record];\n");
-    dump_sexp_r(start);
-    printf("}\n");
-};
-#+end_src
-
-
-*** Cell Initialization
-
-#+name: Cell Initialization
-#+begin_src c
-for(int i = 0; i < limit; i++) @+ {
-    mem[i] = mkcons(0, (i+1)%limit); // Modulo math! Last cell gets a 0 as the tail
-}
-mem[NIL] = 0;
-mem[F] = mksymbol('F', NIL);
-mem[T] = mksymbol('T', NIL);
-f = 1;
-
-#+end_src
-
-*** LD Instruction
-
-#+name: LD Instruction
-#+begin_src c
-index locate(index pair) @+ {
-    // This all assumes head and tail return an index
-    int64_t frame    = number(head(mem[pair]));
-    int64_t position = number(tail(mem[pair])); // Is ordinal a better name?
-    index w = e;                              // 0. Start at the top of the environment
-    while (frame-- > 0) w = tail(mem[w]);     // 1. walk to the correct frame
-    w = head(mem[w]);                         // 2. step onto the frame's list
-    while (position-- > 0) w = tail(mem[w]); // 3. walk to the correct position
-    return head(mem[w]);                      // 4. step onto the position's value
-}
-
-void ld(void) @+ {
-    // GUIDO: This is the same as push, should we just call it that?
-    s = addcons(locate(popc()), s);
-}
-#+end_src
-
-*** LDC Instruction
-
-#+name: LDC Instruction
-#+begin_src c
-void ldc(void) @+ {
-    s = addcons(popc(), s);
-}
-#+end_src
-
-*** LDF Instruction
-
-#+name: LDF Instruction
-#+begin_src c
-void ldf(void) @+ {
-    s = addcons(addcons(popc(), e), s);
-}
-#+end_src
-
-*** AP Instruction
-
-#+name: AP Instruction
-#+begin_src c
-void ap(void) @+ {
-    index w = popc();
-    index v = popc();
-    d = addcons(s, addcons(e, addcons(c, d)));
-    c = head(mem[w]);
-    e = addcons(v, tail(mem[w]));
-}
-#+end_src
-
-*** RTN Instruction
-
-#+name: RTN Instruction
-#+begin_src c
-void rtn(void) @+ {
-    index w = popd();
-    s = addcons(head(mem[s]), w);
-    e = popd();
-    c = popd();
-}
-#+end_src
-
-*** DUM Instruction
-
-#+name: DUM Instruction
-#+begin_src c
-#+end_src
-
-*** RAP Instruction
-
-#+name: RAP Instruction
-#+begin_src c
-#+end_src
-
-*** SEL Instruction
-
-#+name: SEL Instruction
-#+begin_src c
-#+end_src
-
-*** JOIN Instruction
-
-#+name: JOIN Instruction
-#+begin_src c
-#+end_src
-
-*** CAR Instruction
-
-#+name: CAR Instruction
-#+begin_src c
-void car(void) @+ {
-    index w = pops();
-    s = addcons(head(mem[w]), s);
-}
-#+end_src
-
-*** CDR Instruction
-
-#+name: CDR Instruction
-#+begin_src c
-void cdr(void) @+ {
-    index w = pops();
-    s = addcons(tail(mem[w]), s);
-}
-#+end_src
-
-*** ATOM Instruction
-
-#+name: ATOM Instruction
-#+begin_src c
-void atom(void) @+ {
-    index w = pops();
-    bool atom = !iscons(mem[w]);
-    s = addcons(atom ? T : F, s);
-}
-#+end_src
-
-*** CONS Instruction
-
-#+name: CONS Instruction
-#+begin_src c
-void cons(void) @+ {
-    index w = addcons(pops(), pops());
-    s = addcons(w, s);
-}
-#+end_src
-
-*** EQ Instruction
-
-#+name: EQ Instruction
-#+begin_src c
-void eq(void) @+ {
-    index x = pops();
-    index y = pops();
-    bool b = x == y || number(x) == number(y);
-    s = addcons(b ? T : F, s);
-}
-#+end_src
-
-*** ADD Instruction
-
-#+name: ADD Instruction
-#+begin_src c
-void add(void) @+ {
-    int64_t x = number(pops());
-    int64_t y = number(pops());
-    s = addcons(addcell(mknumber(x + y)), s);
-}
-#+end_src
-
-*** SUB Instruction
-
-#+name: SUB Instruction
-#+begin_src c
-void sub(void) @+ {
-    int64_t x = number(pops());
-    int64_t y = number(pops());
-    s = addcons(addcell(mknumber(y - x)), s);
-}
-#+end_src
-
-*** MUL Instruction
-
-#+name: MUL Instruction
-#+begin_src c
-void mul(void) @+ {
-    int64_t x = number(pops());
-    int64_t y = number(pops());
-    s = addcons(addcell(mknumber(x * y)), s);
-}
-#+end_src
-
-*** DIV Instruction
-
-#+name: DIV Instruction
-#+begin_src c
-void div(void) @+ {
-    int64_t x = number(pops());
-    int64_t y = number(pops());
-    s = addcons(addcell(mknumber(y / x)), s);
-}
-#+end_src
-
-*** REM Instruction
-
-#+name: REM Instruction
-#+begin_src c
-void rem(void) @+ {
-    int64_t x = number(pops());
-    int64_t y = number(pops());
-    s = addcons(addcell(mknumber(y % x)), s);
-}
-#+end_src
-
-*** LEQ Instruction
-
-#+name: LEQ Instruction
-#+begin_src c
-void leq(void) @+ {
-    index x = pops();
-    index y = pops();
-    bool b = number(y) <= number(x);
-    s = addcons(b ? T : F, s);
-}
-#+end_src
-
-*** STOP Instruction
-
-#+name: STOP Instruction
-#+begin_src c
-#+end_src
-
 *** Main CWEB File
 
 #+begin_src cweb :noweb yes :tangle secd.w
@@ -1011,16 +9,8 @@ void leq(void) @+ {
 
 \input luamplib.sty
 
-\def\paper#1{{\it #1}}
-\def\book#1{{\it #1}}
-\def\emph#1{{\it #1}}
-
-\def\Stack{{\it Stack}}
-\def\Environment{{\it Environment}}
-\def\Control{{\it Control}}
-\def\Dump{{\it Dump}}
-\def\LIFO{{\sc LIFO}}
-
+<<TeX Macros>>
+      
 \tenrm
 
 @* Introduction. The SECD abstract machine was originally described by
@@ -1758,6 +748,1024 @@ void validate_stop_implementation() @+ {
 
 
 
+
+
+** Put together everything
+
+#+begin_src elisp 
+(org-babel-tangle)
+(org-sbe weaveit)
+#+end_src
+
+#+RESULTS:
+: nil
+
+#+name: weaveit
+#+begin_src sh :results output
+cweave secd
+luatex secd
+#+end_src
+
+** Instructions
+
+#+name: Instructions
+| Opcode | Name | Action                                            |
+|      1 | LD   | Load variable from the environment                |
+|      2 | LDC  | Load constant                                     |
+|      3 | LDF  | Load function                                     |
+|      4 | AP   | Apply function                                    |
+|      5 | RTN  | Return                                            |
+|      6 | DUM  | Create dummy environment                          |
+|      7 | RAP  | Recursive apply                                   |
+|      8 | SEL  | Select subcontrol                                 |
+|      9 | JOIN | Rejoin main control                               |
+|     10 | CAR  | Take car of item on top of stack                  |
+|     11 | CDR  | Take cdr of item on top of stack                  |
+|     12 | ATOM | Apply atom predicate to top stack item            |
+|     13 | CONS | Form cons of top two stack items                  |
+|     14 | EQ   | Apply eq predicate to top two stack items         |
+|     15 | ADD  | Apply arithmetic operation to top two stack items |
+|     16 | SUB  | Apply arithmetic operation to top two stack items |
+|     17 | MUL  | Apply arithmetic operation to top two stack items |
+|     18 | DIV  | Apply arithmetic operation to top two stack items |
+|     19 | REM  | Apply arithmetic operation to top two stack items |
+|     20 | LEQ  | Apply arithmetic operation to top two stack items |
+|     21 | STOP | Stop                                              |
+
+** Validation Data
+
+#+name: ld-memory
+| addr | type | head | tail | val |
+|    7 | atom |      |      | LD  |
+|    8 | cons |    7 |   12 |     |
+|    9 | atom |      |      | 0   |
+|   10 | cons |    9 |   11 |     |
+|   11 | atom |      |      | 1   |
+|   12 | cons |   10 |   14 |     |
+|   13 | atom |      |      | RTN |
+|   14 | cons |   13 |    0 |     |
+|   20 | atom |      |      | B   |
+|   21 | cons |   20 |   23 |     |
+|   22 | atom |      |      | C   |
+|   23 | cons |   22 |    0 |     |
+|   24 | cons |   21 |   29 |     |
+|   25 | atom |      |      | D   |
+|   26 | cons |   25 |   28 |     |
+|   27 | atom |      |      | E   |
+|   28 | cons |   27 |    0 |     |
+|   29 | cons |   26 |    0 |     |
+|   36 | cons |   24 |    0 |     |
+
+    e = 36;
+    c = 8;
+    f = 40;
+
+#+name: ld-before
+| E | 36 |    |    |    |
+|   | 24 |    | 29 |    |
+|   | 21 | 23 | 26 | 28 |
+|   | 20 | 22 | 25 | 27 |
+| C |  8 | 12 |    | 14 |
+|   |  7 | 10 | 11 | 13 |
+|   |    |  9 |    |    |
+
+
+#+name: ld-after
+|   |   |
+|   |   |
+
+#+name: ldf-memory
+| addr | type | head | tail | val |
+|    0 | cons |    0 |    0 |     |
+|    1 | cons |    2 |    0 |     |
+|    2 | atom |      |      |   0 |
+|    3 | cons |    6 |    5 |     |
+|    5 | cons |    8 |    0 |     |
+|    6 | cons |    9 |    7 |     |
+|    7 | cons |   10 |    0 |     |
+|    8 | cons |   11 |    0 |     |
+|    9 | atom |      |      |   3 |
+|   10 | atom |      |      |   7 |
+|   11 | atom |      |      |   A |
+|   12 | cons |   19 |   13 |     |
+|   13 | cons |   20 |   16 |     |
+|   16 | cons |   23 |   17 |     |
+|   17 | cons |   24 |    0 |     |
+|   19 | atom |      |      | LDF |
+|   20 | cons |   27 |   21 |     |
+|   21 | cons |   28 |   22 |     |
+|   22 | cons |   29 |    0 |     |
+|   23 | atom |      |      |  LD |
+|   24 | cons |   31 |    0 |     |
+|   27 | atom |      |      |  LD |
+|   28 | cons |   35 |   29 |     |
+|   29 | atom |      |      | RTN |
+|   31 | cons |   38 |   32 |     |
+|   32 | atom |      |      |   1 |
+|   35 | cons |   42 |   36 |     |
+|   36 | atom |      |      |   1 |
+|   38 | atom |      |      |   0 |
+|   42 | atom |      |      |   1 |
+|  100 | cons |  101 |    1 |     |
+|  101 | cons |   20 |    3 |     |
+
+#+name: ldf-before
+| S |  1 |    |    |    |    |    |    |
+|   |  2 |    |    |    |    |    |    |
+| E |  3 |    |  5 |    |    |    |    |
+|   |  6 |  7 |  8 |    |    |    |    |
+|   |  9 | 10 | 11 |    |    |    |    |
+| C | 12 | 13 |    |    | 16 | 17 |    |
+|   | 19 | 20 | 21 | 22 | 23 | 24 |    |
+|   |    | 27 | 28 | 29 |    | 31 | 32 |
+|   |    |    | 35 | 36 |    | 38 |    |
+|   |    |    | 42 |    |    |    |    |
+
+#+name: ldf-after
+| S |  100 |    |    |   |    |  1 |    |
+|   | 101* |    |    |   |    |  2 |    |
+|   |   20 | 21 | 22 | E |  3 |    |  5 |
+|   |   27 | 28 | 29 |   |  6 |  7 |  8 |
+|   |      | 35 | 36 |   |  9 | 10 | 11 |
+|   |      | 42 |    |   |    |    |    |
+|   |      |    |    | C | 16 | 17 |    |
+|   |      |    |    |   | 23 | 24 |    |
+|   |      |    |    |   |    | 31 | 32 |
+|   |      |    |    |   |    | 38 |    |
+|   |      |    |    |   |    |    |    |
+
+#+name: ap-before-after-sexp
+| (((LD (1.1) LD (0.0) ADD RTN).((3 7) (A))) (6) 0) | ((2 B))         | (AP STOP)                   | d                      |
+| NIL                                               | ((6) (3 7) (A)) | (LD (1.1) LD (0.0) ADD RTN) | ((0) ((2 B)) (STOP).d) |
+
+#+name: ap-memory
+| addr | type | head | tail |  val |
+|    3 | cons |    4 |    5 |      |
+|    4 | atom |      |      |   LD |
+|    5 | cons |    6 |    7 |      |
+|    6 | cons |   15 |   16 |      |
+|    7 | cons |    8 |    9 |      |
+|    8 | atom |      |      |   LD |
+|    9 | cons |   10 |   11 |      |
+|   10 | cons |   17 |   18 |      |
+|   11 | cons |   12 |   13 |      |
+|   12 | atom |      |      |  ADD |
+|   13 | cons |   14 |    0 |      |
+|   14 | atom |      |      |  RTN |
+|   15 | atom |      |      |    1 |
+|   16 | atom |      |      |    1 |
+|   17 | atom |      |      |    0 |
+|   18 | atom |      |      |    0 |
+|   20 | cons |   22 |   21 |      |
+|   21 | cons |   24 |    0 |      |
+|   22 | cons |   25 |   23 |      |
+|   23 | cons |   26 |    0 |      |
+|   24 | cons |   27 |    0 |      |
+|   25 | atom |      |      |    3 |
+|   26 | atom |      |      |    7 |
+|   27 | atom |      |      |    A |
+|   30 | cons |   31 |    0 |      |
+|   31 | atom |      |      |    6 |
+|   40 | cons |    3 |   41 |      |
+|   41 | cons |   20 |   42 |      |
+|   42 | cons |   30 |   52 |      |
+|   43 | cons |   44 |    0 |      |
+|   44 | cons |   46 |   45 |      |
+|   45 | cons |   47 |    0 |      |
+|   46 | atom |      |      |    2 |
+|   47 | atom |      |      |    B |
+|   48 | cons |   50 |   49 |      |
+|   49 | cons |   51 |    0 |      |
+|   50 | atom |      |      |   AP |
+|   51 | atom |      |      | STOP |
+|   52 | cons |   53 |    0 |      |
+|   53 | atom |      |      |    0 |
+|   60 | cons |   30 |   20 |      |
+|   61 | cons |   52 |   62 |      |
+|   62 | cons |   43 |   63 |      |
+|   63 | cons |   49 |    0 |      |
+
+#+name: ap-before
+| S | 40 | 41 |    |    | 42 | 52 |  E | 43 |    | C | 48 | 49 |
+|   |    | 20 |    | 21 | 30 | 53 |    | 44 | 45 |   | 50 | 51 |
+|   |    | 22 | 23 | 24 | 31 |    |    | 46 | 47 |   |    |    |
+|   |    | 25 | 26 | 27 |    |    |    |    |    |   |    |    |
+|   |  3 |  5 |    |  7 |  9 |    | 11 | 13 |    |   |    |    |
+|   |  4 |  6 | 16 |  8 | 10 | 18 | 12 | 14 |    |   |    |    |
+|   |    | 15 |    |    | 17 |    |    |    |    |   |    |    |
+
+#+name: ap-after
+|   |    |    |    |    |  D | 61 | 62 |    | 63 |
+|   |    |    |    |    |    | 52 | 43 |    | 49 |
+| E | 60 | 20 |    | 21 |    | 53 | 44 | 45 | 51 |
+|   | 30 | 22 | 23 | 24 |    |    | 46 | 47 |    |
+|   | 31 | 25 | 26 | 27 |    |    |    |    |    |
+| C |  3 |  5 |    |  7 |  9 |    | 11 | 13 |    |
+|   |  4 |  6 | 16 |  8 | 10 | 18 | 12 | 14 |    |
+|   |    | 15 |    |    | 17 |    |    |    |    |
+
+#+name: rtn-before-after-sexp
+| (13)   | ((6) (3 7) (A)) | (RTN)  | ((0) ((2 B)) (STOP).d) |
+| (13 0) | ((2 B))         | (STOP) | d                      |
+
+#+name: rtn-memory
+| addr | type | head | tail |  val |
+|   13 | cons |   14 |    0 |      |
+|   14 | atom |      |      |  RTN |
+|   20 | cons |   22 |   21 |      |
+|   21 | cons |   24 |    0 |      |
+|   22 | cons |   25 |   23 |      |
+|   23 | cons |   26 |    0 |      |
+|   24 | cons |   27 |    0 |      |
+|   25 | atom |      |      |    3 |
+|   26 | atom |      |      |    7 |
+|   27 | atom |      |      |    A |
+|   30 | cons |   31 |    0 |      |
+|   31 | atom |      |      |    6 |
+|   40 | cons |    3 |   41 |      |
+|   41 | cons |   20 |   42 |      |
+|   42 | cons |   30 |   52 |      |
+|   43 | cons |   44 |    0 |      |
+|   44 | cons |   46 |   45 |      |
+|   45 | cons |   47 |    0 |      |
+|   46 | atom |      |      |    2 |
+|   47 | atom |      |      |    B |
+|   48 | cons |   50 |   49 |      |
+|   49 | cons |   51 |    0 |      |
+|   50 | atom |      |      |   AP |
+|   51 | atom |      |      | STOP |
+|   52 | cons |   53 |    0 |      |
+|   53 | atom |      |      |    0 |
+|   60 | cons |   30 |   20 |      |
+|   61 | cons |   52 |   62 |      |
+|   62 | cons |   43 |   63 |      |
+|   63 | cons |   49 |    0 |      |
+|   70 | cons |   71 |    0 |      |
+|   71 | atom |      |      |   13 |
+|   72 | cons |   71 | 52   |      |
+
+#+name: rtn-before
+| S | 70 |    |    |    | D | 61 | 62 |    | 63 |
+|   | 71 |    |    |    |   | 52 | 43 |    | 49 |
+| E | 60 | 20 |    | 21 |   | 53 | 44 | 45 | 51 |
+|   | 30 | 22 | 23 | 24 |   |    | 46 | 47 |    |
+|   | 31 | 25 | 26 | 27 |   |    |    |    |    |
+| C | 13 |    |    |    |   |    |    |    |    |
+|   | 14 |    |    |    |   |    |    |    |    |
+|   |    |    |    |    |   |    |    |    |    |
+
+#+name: rtn-after
+| S | 72 | 52 | E | 43 |    | C | 49 |
+|   | 71 | 53 |   | 44 | 45 |   | 51 |
+|   |    |    |   | 46 | 47 |   |    |
+
+#+name: car-memory
+| addr | type | head | tail | val |
+|    1 | cons |    2 |    0 |     |
+|    2 | atom |      |      | CAR |
+|    3 | cons |    4 |    5 |     |
+|    4 | cons |    7 |    8 |     |
+|    5 | cons |    6 |    0 |     |
+|    6 | atom |      |      | C   |
+|    7 | atom |      |      | A   |
+|    8 | atom |      |      | B   |
+|    9 | cons |    7 |    5 |     |
+
+#+name: car-before
+| S | 3 |   | 5 | C | 1 |
+|   | 4 | 8 | 6 |   | 2 |
+|   | 7 |   |   |   |   |
+
+#+name: car-after
+| S | 9 | 5 | 
+|   | 7 | 6 | 
+
+#+name: cdr-memory
+| addr | type | head | tail | val |
+|    1 | cons |    2 |    0 |     |
+|    2 | atom |      |      | CDR |
+|    3 | cons |    4 |    5 |     |
+|    4 | cons |    7 |    8 |     |
+|    5 | cons |    6 |    0 |     |
+|    6 | atom |      |      | C   |
+|    7 | atom |      |      | A   |
+|    8 | atom |      |      | B   |
+|    9 | cons |    8 |    5 |     |
+
+#+name: cdr-before
+| S | 3 |   | 5 | C | 1 |
+|   | 4 | 8 | 6 |   | 2 |
+|   | 7 |   |   |   |   |
+
+#+name: cdr-after
+| S | 9 | 5 |
+|   | 8 | 6 |
+
+#+name: atom-memory
+| addr | type   | head | tail | val  |
+|    1 | cons   |    2 |    0 |      |
+|    2 | atom   |      |      | ATOM |
+|    3 | cons   |    4 |    5 |      |
+|    4 | cons   |    7 |    8 |      |
+|    5 | cons   |    6 |    0 |      |
+|    6 | atom   |      |      | C    |
+|    7 | atom   |      |      | A    |
+|    8 | atom   |      |      | B    |
+|    9 | cons   |   10 |    5 |      |
+|   10 | symbol |      |    0 | #f   |
+
+#+name: atom-before
+| S | 3 |   | 5 | C | 1 |
+|   | 4 | 8 | 6 |   | 2 |
+|   | 7 |   |   |   |   |
+
+#+name: atom-after
+| S |  9 | 5 |
+|   | 10 | 6 |
+
+#+name: cons-memory
+| addr | type | head | tail | val  |
+|    1 | cons |    2 |    0 |      |
+|    2 | atom |      |      | CONS |
+|    3 | cons |    6 |    4 |      |
+|    4 | cons |    7 |    5 |      |
+|    5 | cons |    8 |    0 |      |
+|    6 | atom |      |      | A    |
+|    7 | atom |      |      | B    |
+|    8 | atom |      |      | C    |
+|   10 | cons |    6 |    7 |      |
+|   11 | cons |   10 |    5 |      |
+
+#+name: cons-before
+| S | 3 | 4 | 5 | C | 1 |
+|   | 6 | 7 | 8 |   | 2 |
+
+#+name: cons-after
+| S | 11 |   | 5 |
+|   | 10 | 7 | 8 |
+|   |  6 |   |   |
+
+#+name: eq-memory
+| addr | type | head | tail | val |
+|   21 | cons |   22 |   23 |     |
+|   22 | atom |      |      | EQ  |
+|   23 | cons |   24 |    0 |     |
+|   24 | atom |      |      | EQ  |
+|    3 | cons |    6 |    4 |     |
+|    4 | cons |    7 |    5 |     |
+|    5 | cons |    8 |    0 |     |
+|    6 | atom |      |      | 2   |
+|    7 | atom |      |      | 2   |
+|    8 | atom |      |      | 2   |
+|   10 | atom |      |      | t   |
+|   11 | cons |   10 |    5 |     |
+
+#+name: eq-before
+| S | 3 | 4 | 5 | C | 21 | 23 |
+|   | 6 | 7 | 8 |   | 22 | 24 |
+
+#+name: eq-after
+| S | 11 | 5 | C | 23 |
+|   | 10 | 8 |   | 24 |
+
+
+#+name: add-memory
+| addr | type | head | tail | val |
+|   21 | cons |   22 |    0 |     |
+|   22 | atom |      |      | ADD |
+|    3 | cons |    6 |    4 |     |
+|    4 | cons |    7 |    0 |     |
+|    6 | atom |      |      |   5 |
+|    7 | atom |      |      |   7 |
+|   10 | atom |      |      |  13 |
+|   11 | cons |   10 |    0 |     |
+
+#+name: add-before
+| S | 3 | 4 | C | 21 |
+|   | 6 | 7 |   | 22 |
+
+#+name: add-after
+| S | 11 |   |
+|   | 10 |   |
+
+#+name: sub-memory
+| addr | type | head | tail | val |
+|   21 | cons |   22 |    0 |     |
+|   22 | atom |      |      | SUB |
+|    3 | cons |    6 |    4 |     |
+|    4 | cons |    7 |    0 |     |
+|    6 | atom |      |      |   5 |
+|    7 | atom |      |      |   7 |
+|   10 | atom |      |      |   2 |
+|   11 | cons |   10 |    0 |     |
+
+#+name: sub-before
+| S | 3 | 4 | C | 21 |
+|   | 6 | 7 |   | 22 |
+
+#+name: sub-after
+| S | 11 |   |
+|   | 10 |   |
+
+#+name: mul-memory
+| addr | type | head | tail | val |
+|   21 | cons |   22 |    0 |     |
+|   22 | atom |      |      | MUL |
+|    3 | cons |    6 |    4 |     |
+|    4 | cons |    7 |    0 |     |
+|    6 | atom |      |      |   5 |
+|    7 | atom |      |      |   7 |
+|   10 | atom |      |      |  35 |
+|   11 | cons |   10 |    0 |     |
+
+#+name: mul-before
+| S | 3 | 4 | C | 21 |
+|   | 6 | 7 |   | 22 |
+
+#+name: mul-after
+| S | 11 |   |
+|   | 10 |   |
+
+#+name: div-memory
+| addr | type | head | tail | val |
+|   21 | cons |   22 |    0 |     |
+|   22 | atom |      |      | DIV |
+|    3 | cons |    6 |    4 |     |
+|    4 | cons |    7 |    0 |     |
+|    6 | atom |      |      |   5 |
+|    7 | atom |      |      |   7 |
+|   10 | atom |      |      |   1 |
+|   11 | cons |   10 |    0 |     |
+
+#+name: div-before
+| S | 3 | 4 | C | 21 |
+|   | 6 | 7 |   | 22 |
+
+#+name: div-after
+| S | 11 |   |
+|   | 10 |   |
+
+#+name: rem-memory
+| addr | type | head | tail | val |
+|   21 | cons |   22 |    0 |     |
+|   22 | atom |      |      | REM |
+|    3 | cons |    6 |    4 |     |
+|    4 | cons |    7 |    0 |     |
+|    6 | atom |      |      |   5 |
+|    7 | atom |      |      |   7 |
+|   10 | atom |      |      |   2 |
+|   11 | cons |   10 |    0 |     |
+
+#+name: rem-before
+| S | 3 | 4 | C | 21 |
+|   | 6 | 7 |   | 22 |
+
+#+name: rem-after
+| S | 11 |   |
+|   | 10 |   |
+
+#+name: leq-memory
+| addr | type | head | tail | val |
+|   21 | cons |   22 |    0 |     |
+|   22 | atom |      |      | LEQ |
+|    3 | cons |    6 |    4 |     |
+|    4 | cons |    7 |    0 |     |
+|    6 | atom |      |      |   5 |
+|    7 | atom |      |      |   7 |
+|   10 | atom |      |      |   f |
+|   11 | cons |   10 |    0 |     |
+
+#+name: leq-before
+| S | 3 | 4 | C | 21 |
+|   | 6 | 7 |   | 22 |
+
+#+name: leq-after
+| S | 11 |   |
+|   | 10 |   |
+
+** CWEB File
+
+*** TeX Macros
+
+#+name: TeX Macros
+#+begin_src tex
+\def\paper#1{{\it #1}}
+\def\book#1{{\it #1}}
+\def\emph#1{{\it #1}}
+
+\def\Stack{{\it Stack}}
+\def\Environment{{\it Environment}}
+\def\Control{{\it Control}}
+\def\Dump{{\it Dump}}
+\def\LIFO{{\sc LIFO}}
+#+end_src
+
+
+*** Font Stuff
+
+https://ctan.math.utah.edu/ctan/tex-archive/fonts/mlmodern/doc/mlmodern.pdf
+Map files: http://www.readytext.co.uk/?cat=30
+https://www.tug.org/texlive/doc/updmap.html
+https://tug.org/fonts/fontinstall.html
+
+#+name: Switch to ML Modern Font
+#+begin_src tex
+%%%%%%%%%%% MLModern font changes
+\font\tenrm=rm-mlmr10 % roman text
+\font\preloaded=rm-mlmr9
+\font\preloaded=rm-mlmr8
+\font\sevenrm=rm-mlmr7
+\font\preloaded=rm-mlmr6
+\font\fiverm=rm-mlmr5
+\font\teni=mlmmi10 % math italic
+\font\preloaded=mlmmi9
+\font\preloaded=mlmmi8
+\font\seveni=mlmmi7
+\font\preloaded=mlmmi6
+\font\fivei=mlmmi5
+\font\tensy=mlmsy10 % math symbols
+\font\preloaded=mlmsy9
+\font\preloaded=mlmsy8
+\font\sevensy=mlmsy7
+\font\preloaded=mlmsy6
+\font\fivesy=mlmsy5
+\font\tenex=mlmex10 % math extension
+\font\preloaded=rm-mlmss10 % sans serif
+\font\preloaded=rm-mlmsso10 % sans serif italic
+\font\tenbf=rm-mlmbx10 % boldface extended
+\font\preloaded=rm-mlmbx9
+\font\preloaded=rm-mlmbx8
+\font\sevenbf=rm-mlmbx7
+\font\preloaded=rm-mlmbx6
+\font\fivebf=rm-mlmbx5
+\font\tentt=rm-mlmtt10 % typewriter
+\font\preloaded=rm-mlmtt9
+\font\preloaded=rm-mlmtt8
+\font\preloaded=rm-mlmtto10 % slanted typewriter
+\font\tensl=rm-mlmro10 % slanted roman
+\font\preloaded=rm-mlmro9
+\font\preloaded=rm-mlmro8
+\font\tenit=rm-mlmri10 % text italic
+\font\preloaded=rm-mlmri9
+\font\preloaded=rm-mlmri8
+\font\preloaded=rm-mlmri7
+\font\preloaded=rm-mlmu10 % unslanted text italic
+\font\preloaded=mlmmib10 % bold math italic
+\font\preloaded=mlmbsy10 % bold math symbols
+\font\preloaded=rm-mlmcsc10 % caps and small caps
+\font\preloaded=rm-mlmr7 scaled \magstep4 % for titles
+\font\preloaded=rm-mlmtt10 scaled \magstep2
+\font\preloaded=rm-mlmssbx10 scaled \magstep2
+\let\preloaded=\undefined % preloaded fonts must be declared anew later.
+\skewchar\teni='177 \skewchar\seveni='177 \skewchar\fivei='177
+\skewchar\tensy='60 \skewchar\sevensy='60 \skewchar\fivesy='60
+\textfont0=\tenrm \scriptfont0=\sevenrm \scriptscriptfont0=\fiverm
+\textfont1=\teni \scriptfont1=\seveni \scriptscriptfont1=\fivei
+\textfont2=\tensy \scriptfont2=\sevensy \scriptscriptfont2=\fivesy
+\textfont3=\tenex \scriptfont3=\tenex \scriptscriptfont3=\tenex
+\newfam\itfam \def\it{\fam\itfam\tenit} % \it is family 4
+\textfont\itfam=\tenit
+\newfam\slfam \def\sl{\fam\slfam\tensl} % \sl is family 5
+\textfont\slfam=\tensl
+\newfam\bffam \def\bf{\fam\bffam\tenbf} % \bf is family 6
+\textfont\bffam=\tenbf \scriptfont\bffam=\sevenbf
+\scriptscriptfont\bffam=\fivebf
+\newfam\ttfam \def\tt{\fam\ttfam\tentt} % \tt is family 7
+\textfont\ttfam=\tentt
+\font\ninerm=rm-mlmr9 % cmr9
+\font\eightrm=rm-mlmr8 % cmr8
+\font\sevenrm=rm-mlmr7 % cmr7
+\font\titlefont=rm-mlmr7 scaled\magstep4 % title on the contents page
+%\font\ttitlefont=cmtt10 scaled\magstep2 % typewriter type in title
+%\font\tentex=cmtex10 % TeX extended character set (used in strings)
+%%%%%%%%%%% MLModern font changes
+#+end_src
+
+*** Define Cells
+
+#+name: Define Cells
+#+begin_src c
+cell mem[limit];
+index f; // free list
+
+index addcell(cell c) @+ {
+    index w = f;      // Get the next free cell index
+    f = tail(mem[f]); // Remove it from the free list
+    mem[w] = c;       // Put our newly created cell into our allocated slot
+    return w;         // Return the location of our new cell
+}
+
+index addcons(index h, index t) { return addcell(mkcons(h, t)); }
+
+#define popfunction(reg) index pop##reg() @+ { \
+    index w = head(mem[reg]); \
+    reg = tail(mem[reg]); \
+    return w; \
+}
+
+popfunction(s);
+popfunction(c);
+popfunction(d);
+
+#+end_src
+
+*** Cell Structure Figure
+
+#+name: Cell Structure Figure
+#+begin_src metapost
+u = 1mm;
+x := 0;
+y := 0;
+path car, cdr, tag;
+car := ((0,0)--(31u,0)--(31u,4u)--(0,4u)--cycle) shifted (0,y);
+cdr := ((0,0)--(31u,0)--(31u,4u)--(0,4u)--cycle) shifted (31u,y);
+tag := ((0,0)--(6u,0)--(6u,4u)--(0,4u)--cycle) shifted (62u,y);
+draw car;
+draw cdr;
+draw tag;
+label.lft("Cons" infont "rm-mlmr9", .5[point 0 of car,point 3 of car]);
+label.top("car" infont "rm-mlmri9", .5[point 0 of car,point 1 of car]);
+label.bot("63..34" infont "rm-mlmr9",  .5[point 0 of car,point 1 of car]);
+label.top("cdr" infont "rm-mlmri9", .5[point 0 of cdr,point 1 of cdr]);
+label.bot("33..2" infont "rm-mlmr9",  .5[point 0 of cdr,point 1 of cdr]);
+label.top("01" infont "rm-mlmtt8", .5[point 0 of tag,point 1 of tag]);
+label.bot("1..0" infont "rm-mlmr9",   .5[point 0 of tag,point 1 of tag]);
+
+x := 0;
+
+y := -10u;
+path number;
+number := ((0,0)--(62u,0)--(62u,4u)--(0,4u)--cycle) shifted (0,y);
+tag := ((0,0)--(6u,0)--(6u,4u)--(0,4u)--cycle) shifted (62u,y);
+draw number;
+draw tag;
+label.lft("Number" infont "rm-mlmr9", .5[point 0 of number,point 3 of number]);
+label.top("car" infont "rm-mlmri9", .5[point 0 of number,point 1 of number]);
+label.bot("63..2" infont "rm-mlmr9",  .5[point 0 of number,point 1 of number]);
+label.top("00" infont "rm-mlmtt8", .5[point 0 of tag,point 1 of tag]);
+label.bot("1..0" infont "rm-mlmr9",   .5[point 0 of tag,point 1 of tag]);
+
+x := 85u;
+y := 0;
+car := ((0,0)--(31u,0)--(31u,4u)--(0,4u)--cycle) shifted (x,y);
+cdr := ((0,0)--(31u,0)--(31u,4u)--(0,4u)--cycle) shifted (x+31u,y);
+tag := ((0,0)--(6u,0)--(6u,4u)--(0,4u)--cycle) shifted (x+62u,y);
+draw car;
+draw cdr;
+draw tag;
+label.lft("Symbol" infont "rm-mlmr9", .5[point 0 of car,point 3 of car]);
+label.top("char" infont "rm-mlmri9", .5[point 0 of car,point 1 of car]);
+label.bot("63..34" infont "rm-mlmr9",  .5[point 0 of car,point 1 of car]);
+label.top("next" infont "rm-mlmri9", .5[point 0 of cdr,point 1 of cdr]);
+label.bot("33..2" infont "rm-mlmr9",  .5[point 0 of cdr,point 1 of cdr]);
+label.top("11" infont "rm-mlmtt8", .5[point 0 of tag,point 1 of tag]);
+label.bot("1..0" infont "rm-mlmr9",   .5[point 0 of tag,point 1 of tag]);
+
+#+end_src
+
+
+
+*** Validate Cell Implementation
+
+| tag a | tag b | type                  |
+|     0 |     0 | 62 bit signed integer |
+|     1 |     0 | 7 bytes of UTF-8?     |
+|     0 |     1 | cons cell             |
+|     1 |     1 | symbol head?          |
+
+The most positive number has a 0 in the most significant position and
+1's elsewhere: 01…1112 = 2N−1 − 1. The most negative number has a 1 in
+the most significant position and 0's elsewhere: 10…0002 = −2N−1.
+
+#+begin_src python :results output :var cons_examples=cons_examples :var number_examples=number_examples
+import bitstring
+#print('0'*31 + '1'*31)
+#print('0'*62)
+#print('1'*62)
+#print(bitstring.Bits(bin='0b01111111111111111111111111111111111111111111111111111111111111', length=62).int)
+#print(bitstring.Bits(bin='0b10000000000000000000000000000000000000000000000000000000000000', length=62).int)
+#print(bitstring.Bits(int=2305843009213693952, length=63).bin)
+for head, tail, cell, notes in cons_examples[1:]:
+    cell = bitstring.Bits(bin=cell.replace(' ', ''), length=64).hex
+    print(f'    assert(mkcons({head}, {tail}) == 0x{cell}); // {notes}')
+
+for vin, vout, cell, notes in number_examples[1:]:
+    cell = bitstring.Bits(bin=cell.replace(' ', ''), length=64).hex
+    print(f'    assert(mknumber({vin}) == 0x{cell} && "{notes}");')
+    print(f'    assert(deref_number_from_cell(mknumber({vin})) == {vout} && "{notes}");')
+#+end_src
+
+#+RESULTS:
+#+begin_example
+    assert(mkcons(0, 0xffff'ffff) == 0x00000001fffffffd); // Numbers are truncated to 31 bits
+    assert(mkcons(0xffff'ffff, 0) == 0xfffffffe00000001); // Numbers are truncated to 31 bits
+    assert(mknumber(0) == 0x0000000000000000 && "Zero");
+    assert(deref_number_from_cell(mknumber(0)) == 0 && "Zero");
+    assert(mknumber(-1) == 0xfffffffffffffffc && "Negative numbers are represeted properly");
+    assert(deref_number_from_cell(mknumber(-1)) == -1 && "Negative numbers are represeted properly");
+    assert(mknumber(2305843009213693951) == 0x7ffffffffffffffc && "Most positive number");
+    assert(deref_number_from_cell(mknumber(2305843009213693951)) == 2305843009213693951 && "Most positive number");
+    assert(mknumber(-2305843009213693952) == 0x8000000000000000 && "Most negative number");
+    assert(deref_number_from_cell(mknumber(-2305843009213693952)) == -2305843009213693952 && "Most negative number");
+    assert(mknumber(2305843009213693952) == 0x8000000000000000 && "Most positive number + 1 gets truncated");
+    assert(deref_number_from_cell(mknumber(2305843009213693952)) == -2305843009213693952 && "Most positive number + 1 gets truncated");
+#+end_example
+
+#+name: cons_examples
+| Head        | Tail        | Cell                                                                | Notes                            |
+| 0           | 0xffff'ffff | 0000000000000000000000000000000 1111111111111111111111111111111 01  | Numbers are truncated to 31 bits |
+| 0xffff'ffff | 0           | 1111111111111111111111111111111 0000000000000000000000000000000 01  | Numbers are truncated to 31 bits |
+
+#+name: number_examples
+|             Value In |            Value Out | Cell                                                              | Notes                                    |
+|                    0 |                    0 | 00000000000000000000000000000000000000000000000000000000000000 00 | Zero                                     |
+|                   -1 |                   -1 | 11111111111111111111111111111111111111111111111111111111111111 00 | Negative numbers are represeted properly |
+|  2305843009213693951 |  2305843009213693951 | 01111111111111111111111111111111111111111111111111111111111111 00 | Most positive number                     |
+| -2305843009213693952 | -2305843009213693952 | 10000000000000000000000000000000000000000000000000000000000000 00 | Most negative number                     |
+|  2305843009213693952 | -2305843009213693952 | 10000000000000000000000000000000000000000000000000000000000000 00 | Most positive number + 1 gets truncated  |
+
+#+name: Validate Cell Implementation
+#+begin_src c
+// TODO: make this invisible to cweave and add table of same info
+void validate_cell_implementation(void) @+ {
+    assert(iscons(mkcons(0, 0)));
+    assert(isnumber(mknumber(0)));
+    assert(issymbol(mksymbol('A', 0)));
+    ///////////////////
+    assert(mkcons(0, 0xffff'ffff) == 0x00000001fffffffd); // Numbers are truncated to 31 bits
+    assert(mkcons(0xffff'ffff, 0) == 0xfffffffe00000001); // Numbers are truncated to 31 bits
+    assert(mknumber(0) == 0x0000000000000000 && "Zero");
+    assert(deref_number_from_cell(mknumber(0)) == 0 && "Zero");
+    assert(mknumber(-1) == 0xfffffffffffffffc && "Negative numbers are represeted properly");
+    assert(deref_number_from_cell(mknumber(-1)) == -1 && "Negative numbers are represeted properly");
+    assert(mknumber(2305843009213693951) == 0x7ffffffffffffffc && "Most positive number");
+    assert(deref_number_from_cell(mknumber(2305843009213693951)) == 2305843009213693951 && "Most positive number");
+    assert(mknumber(-2305843009213693952) == 0x8000000000000000 && "Most negative number");
+    assert(deref_number_from_cell(mknumber(-2305843009213693952)) == -2305843009213693952 && "Most negative number");
+    assert(mknumber(2305843009213693952) == 0x8000000000000000 && "Most positive number + 1 gets truncated");
+    assert(deref_number_from_cell(mknumber(2305843009213693952)) == -2305843009213693952 && "Most positive number + 1 gets truncated");
+}
+#+end_src
+
+*** Dump Cells Implementation
+
+#+begin_src c
+void dump_sexp_r(index start) @+ {
+    index i = start;
+    if (i && i < 1010) {
+        cell c = mem[i];
+        if (cons(c)) {
+            printf("%u [label=\"<car> %llu | <cdr> %llu\"];\n", i, head(c), tail(c));
+            if (head(c)) {
+                printf("%d:car->%llu;\n", i, head(c));
+                dump_sexp_r(head(c));
+            }
+            if (tail(c)) {
+                printf("%d:cdr->%llu;\n", i, tail(c));
+                dump_sexp_r(tail(c));
+            }
+        }
+        else if (isnumber(c)) {
+            printf("%u [label=\"%lld\" shape=\"doublecircle\"];\n", i, number(c));
+        }
+    }
+}
+
+void dump_sexp(index start) {
+    printf("digraph structs { node [shape=record];\n");
+    dump_sexp_r(start);
+    printf("}\n");
+};
+#+end_src
+
+
+*** Cell Initialization
+
+#+name: Cell Initialization
+#+begin_src c
+for(int i = 0; i < limit; i++) @+ {
+    mem[i] = mkcons(0, (i+1)%limit); // Modulo math! Last cell gets a 0 as the tail
+}
+mem[NIL] = 0;
+mem[F] = mksymbol('F', NIL);
+mem[T] = mksymbol('T', NIL);
+f = 1;
+
+#+end_src
+
+*** LD Instruction
+
+#+name: LD Instruction
+#+begin_src c
+index locate(index pair) @+ {
+    // This all assumes head and tail return an index
+    int64_t frame    = number(head(mem[pair]));
+    int64_t position = number(tail(mem[pair])); // Is ordinal a better name?
+    index w = e;                              // 0. Start at the top of the environment
+    while (frame-- > 0) w = tail(mem[w]);     // 1. walk to the correct frame
+    w = head(mem[w]);                         // 2. step onto the frame's list
+    while (position-- > 0) w = tail(mem[w]); // 3. walk to the correct position
+    return head(mem[w]);                      // 4. step onto the position's value
+}
+
+void ld(void) @+ {
+    // GUIDO: This is the same as push, should we just call it that?
+    s = addcons(locate(popc()), s);
+}
+#+end_src
+
+*** LDC Instruction
+
+#+name: LDC Instruction
+#+begin_src c
+void ldc(void) @+ {
+    s = addcons(popc(), s);
+}
+#+end_src
+
+*** LDF Instruction
+
+#+name: LDF Instruction
+#+begin_src c
+void ldf(void) @+ {
+    s = addcons(addcons(popc(), e), s);
+}
+#+end_src
+
+*** AP Instruction
+
+#+name: AP Instruction
+#+begin_src c
+void ap(void) @+ {
+    index w = popc();
+    index v = popc();
+    d = addcons(s, addcons(e, addcons(c, d)));
+    c = head(mem[w]);
+    e = addcons(v, tail(mem[w]));
+}
+#+end_src
+
+*** RTN Instruction
+
+#+name: RTN Instruction
+#+begin_src c
+void rtn(void) @+ {
+    index w = popd();
+    s = addcons(head(mem[s]), w);
+    e = popd();
+    c = popd();
+}
+#+end_src
+
+*** DUM Instruction
+
+#+name: DUM Instruction
+#+begin_src c
+#+end_src
+
+*** RAP Instruction
+
+#+name: RAP Instruction
+#+begin_src c
+#+end_src
+
+*** SEL Instruction
+
+#+name: SEL Instruction
+#+begin_src c
+#+end_src
+
+*** JOIN Instruction
+
+#+name: JOIN Instruction
+#+begin_src c
+#+end_src
+
+*** CAR Instruction
+
+#+name: CAR Instruction
+#+begin_src c
+void car(void) @+ {
+    index w = pops();
+    s = addcons(head(mem[w]), s);
+}
+#+end_src
+
+*** CDR Instruction
+
+#+name: CDR Instruction
+#+begin_src c
+void cdr(void) @+ {
+    index w = pops();
+    s = addcons(tail(mem[w]), s);
+}
+#+end_src
+
+*** ATOM Instruction
+
+#+name: ATOM Instruction
+#+begin_src c
+void atom(void) @+ {
+    index w = pops();
+    bool atom = !iscons(mem[w]);
+    s = addcons(atom ? T : F, s);
+}
+#+end_src
+
+*** CONS Instruction
+
+#+name: CONS Instruction
+#+begin_src c
+void cons(void) @+ {
+    index w = addcons(pops(), pops());
+    s = addcons(w, s);
+}
+#+end_src
+
+*** EQ Instruction
+
+#+name: EQ Instruction
+#+begin_src c
+void eq(void) @+ {
+    index x = pops();
+    index y = pops();
+    bool b = x == y || number(x) == number(y);
+    s = addcons(b ? T : F, s);
+}
+#+end_src
+
+*** ADD Instruction
+
+#+name: ADD Instruction
+#+begin_src c
+void add(void) @+ {
+    int64_t x = number(pops());
+    int64_t y = number(pops());
+    s = addcons(addcell(mknumber(x + y)), s);
+}
+#+end_src
+
+*** SUB Instruction
+
+#+name: SUB Instruction
+#+begin_src c
+void sub(void) @+ {
+    int64_t x = number(pops());
+    int64_t y = number(pops());
+    s = addcons(addcell(mknumber(y - x)), s);
+}
+#+end_src
+
+*** MUL Instruction
+
+#+name: MUL Instruction
+#+begin_src c
+void mul(void) @+ {
+    int64_t x = number(pops());
+    int64_t y = number(pops());
+    s = addcons(addcell(mknumber(x * y)), s);
+}
+#+end_src
+
+*** DIV Instruction
+
+#+name: DIV Instruction
+#+begin_src c
+void div(void) @+ {
+    int64_t x = number(pops());
+    int64_t y = number(pops());
+    s = addcons(addcell(mknumber(y / x)), s);
+}
+#+end_src
+
+*** REM Instruction
+
+#+name: REM Instruction
+#+begin_src c
+void rem(void) @+ {
+    int64_t x = number(pops());
+    int64_t y = number(pops());
+    s = addcons(addcell(mknumber(y % x)), s);
+}
+#+end_src
+
+*** LEQ Instruction
+
+#+name: LEQ Instruction
+#+begin_src c
+void leq(void) @+ {
+    index x = pops();
+    index y = pops();
+    bool b = number(y) <= number(x);
+    s = addcons(b ? T : F, s);
+}
+#+end_src
+
+*** STOP Instruction
+
+#+name: STOP Instruction
+#+begin_src c
+#+end_src
 
 ** Convert before-after register table
 
