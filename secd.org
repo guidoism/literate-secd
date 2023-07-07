@@ -1,4 +1,4 @@
-*** Main CWEB File
+** Main CWEB File
 
 #+begin_src cweb :noweb yes :tangle secd.w
 @f index int
@@ -741,9 +741,7 @@ void validate_leq_implementation() @+ {
 void validate_stop_implementation() @+ {
 }
         
-        
 #+end_src
-
 
 
 
