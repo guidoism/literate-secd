@@ -518,7 +518,24 @@ endfig;
   Operational semantics: $ s\ e\ (STOP.c)\ d \enspace\to\enspace s\ e\ (STOP.c)\ d$
 @<STOP Instruction@>=
 <<STOP Instruction>>
-      
+
+@ Futher Research.
+
+  The code to build this paper is a mess. It's a mixture of Python, C,
+  Metapost, CWEB, noweb, and Org Mode.
+
+  Use of characters not allowed in C identifiers would be helpful, for
+  example using a question mark in functions that return a boolean
+  would read a bit better.
+
+  Better bit manipulation syntax.
+
+  Invariant syntax.
+
+  MMIXAL code instead of C.
+
+  Forth instead of SECD and compare and contrast the two abstract machines.
+             
 @* Testing Main.
 
 @c
