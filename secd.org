@@ -1362,6 +1362,10 @@ int64_t getnumber(index i) @+ {
     return (int64_t)(mem[i]) >> 2;
 }
 
+int64_t getnumber2(cell c) @+ {
+    return (int64_t)(c) >> 2;
+}
+
 index addcell(cell c) @+ {
     index w = f;      // Get the next free cell index
     f = tail(mem[f]); // Remove it from the free list
