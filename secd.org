@@ -601,7 +601,7 @@ void validate_ld_implementation(void) @+ {
     f = 40;
     index w = popc();
     assert(w == 7);
-    assert(getnumber(w) == 1); // LD
+    assert(getnumber2(mem[w]) == 1); // LD
     assert(c == 12);
     ld();
     assert(head(mem[head(mem[s])]) == 25);
@@ -615,9 +615,9 @@ void validate_ldc_implementation(void) @+ {
     mem[101] = mknumber(2);
     mem[103] = mknumber(42);
     index w = popc();
-    assert(getnumber(w) == 2); // LDC
+    assert(getnumber2(mem[w]) == 2); // LDC
     ldc();
-    assert(getnumber(head(mem[s])) == 42);
+    assert(getnumber2(mem[head(mem[s])]) == 42);
 }
 
 void validate_ldf_implementation(void) @+ {
@@ -627,7 +627,7 @@ void validate_ldf_implementation(void) @+ {
     c = 12;
     f = 100;
     index w = popc();
-    assert(getnumber(w) == 3); // LDF
+    assert(getnumber2(mem[w]) == 3); // LDF
     ldf();
     assert(head(mem[head(mem[s])]) == 20);
 }
@@ -642,10 +642,7 @@ void validate_atom_implementation(void) @+ {
     c = 1;
     f = 9;
     index w = popc();
-    printf("GUIDO: index w = %u\n", w);
-    printf("GUIDO: mem[w] = %llu\n", mem[w].val);
-    printf("GUIDO: mem[w] >> 2 = %llu\n", mem[w].val >> 2);
-    assert(getnumber(w) == 12); // ATOM
+    assert(getnumber2(mem[w]) == 12); // ATOM
     atom();
     assert(head(mem[s]) == F);
     atom();
@@ -659,7 +656,7 @@ void validate_cons_implementation(void) @+ {
     c = 1;
     f = 10;
     index w = popc();
-    assert(getnumber(w) == 13); // CONS
+    assert(getnumber2(mem[w]) == 13); // CONS
     cons();
     assert(head(mem[s]) == 10);
     assert(head(mem[head(mem[s])]) == 6);
@@ -673,7 +670,7 @@ void validate_eq_implementation(void) @+ {
     c = 21;
     f = 10;
     index w = popc();
-    assert(getnumber(w) == 14); // EQ
+    assert(getnumber2(mem[w]) == 14); // EQ
     eq();
     assert(head(mem[s]) == T);
     eq();
@@ -687,9 +684,9 @@ void validate_add_implementation() @+ {
     c = 21;
     f = 10;
     index w = popc();
-    assert(getnumber(w) == 15); // ADD
+    assert(getnumber2(mem[w]) == 15); // ADD
     add();
-    assert(getnumber(head(mem[s])) == 12);
+    assert(getnumber2(mem[head(mem[s])]) == 12);
 }
         
 void validate_sub_implementation() @+ {
@@ -699,9 +696,9 @@ void validate_sub_implementation() @+ {
     c = 21;
     f = 10;
     index w = popc();
-    assert(getnumber(w) == 16); // SUB
+    assert(getnumber2(mem[w]) == 16); // SUB
     sub();
-    assert(getnumber(head(mem[s])) == 2);
+    assert(getnumber2(mem[head(mem[s])]) == 2);
 }
         
 void validate_mul_implementation() @+ {
@@ -711,9 +708,9 @@ void validate_mul_implementation() @+ {
     c = 21;
     f = 10;
     index w = popc();
-    assert(getnumber(w) == 17); // MUL
+    assert(getnumber2(mem[w]) == 17); // MUL
     mul();
-    assert(getnumber(head(mem[s])) == 35);
+    assert(getnumber2(mem[head(mem[s])]) == 35);
 }
         
 void validate_div_implementation() @+ {
@@ -723,9 +720,9 @@ void validate_div_implementation() @+ {
     c = 21;
     f = 10;
     index w = popc();
-    assert(getnumber(w) == 18); // DIV
+    assert(getnumber2(mem[w]) == 18); // DIV
     div();
-    assert(getnumber(head(mem[s])) == 1);
+    assert(getnumber2(mem[head(mem[s])]) == 1);
 }
         
 void validate_rem_implementation() @+ {
@@ -735,9 +732,9 @@ void validate_rem_implementation() @+ {
     c = 21;
     f = 10;
     index w = popc();
-    assert(getnumber(w) == 19); // REM
+    assert(getnumber2(mem[w]) == 19); // REM
     rem();
-    assert(getnumber(head(mem[s])) == 2);
+    assert(getnumber2(mem[head(mem[s])]) == 2);
 }
         
 void validate_leq_implementation() @+ {
@@ -747,7 +744,7 @@ void validate_leq_implementation() @+ {
     c = 21;
     f = 10;
     index w = popc();
-    assert(getnumber(w) == 20); // LEQ
+    assert(getnumber2(mem[w]) == 20); // LEQ
     leq();
     assert(head(mem[s]) == F);
 }
