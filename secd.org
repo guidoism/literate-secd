@@ -61,8 +61,8 @@ which we place on the rightmost end of the word.
 \endmplibcode
 \medskip
 
-For each cell type we will define macros to create a cell from parts,
-to test whether the cell is of a particular type, and to extract each
+For each cell type we will define macros to 1. Create a cell from parts,
+2. Test whether the cell is of a particular type, and 3. Extract each
 of the parts. Each of these macros operate on a machine's 64-bit registers
 --- they don't affect what is stored in the abstract machine's memory.
 They each follow a similar pattern: mask\rightarrow shift\rightarrow tag.    
@@ -1399,9 +1399,9 @@ draw car;
 draw cdr;
 draw tag;
 label.lft("Cons" infont "rm-mlmr9", .5[point 0 of car,point 3 of car]);
-label.top("car" infont "rm-mlmri9", .5[point 0 of car,point 1 of car]);
+label.top("car/head" infont "rm-mlmri9", .5[point 0 of car,point 1 of car] shifted (0,-.5mm));
 label.bot("63..34" infont "rm-mlmr9",  .5[point 0 of car,point 1 of car]);
-label.top("cdr" infont "rm-mlmri9", .5[point 0 of cdr,point 1 of cdr]);
+label.top("cdr/tail" infont "rm-mlmri9", .5[point 0 of cdr,point 1 of cdr] shifted (0,-.5mm));
 label.bot("33..2" infont "rm-mlmr9",  .5[point 0 of cdr,point 1 of cdr]);
 label.top("01" infont "rm-mlmtt8", .5[point 0 of tag,point 1 of tag]);
 label.bot("1..0" infont "rm-mlmr9",   .5[point 0 of tag,point 1 of tag]);
@@ -1415,7 +1415,7 @@ tag := ((0,0)--(6u,0)--(6u,4u)--(0,4u)--cycle) shifted (62u,y);
 draw number;
 draw tag;
 label.lft("Number" infont "rm-mlmr9", .5[point 0 of number,point 3 of number]);
-label.top("car" infont "rm-mlmri9", .5[point 0 of number,point 1 of number]);
+label.top("number" infont "rm-mlmri9", .5[point 0 of number,point 1 of number] shifted (0,.1mm));
 label.bot("63..2" infont "rm-mlmr9",  .5[point 0 of number,point 1 of number]);
 label.top("00" infont "rm-mlmtt8", .5[point 0 of tag,point 1 of tag]);
 label.bot("1..0" infont "rm-mlmr9",   .5[point 0 of tag,point 1 of tag]);
@@ -1429,9 +1429,9 @@ draw car;
 draw cdr;
 draw tag;
 label.lft("Symbol" infont "rm-mlmr9", .5[point 0 of car,point 3 of car]);
-label.top("char" infont "rm-mlmri9", .5[point 0 of car,point 1 of car]);
+label.top("char" infont "rm-mlmri9", .5[point 0 of car,point 1 of car] shifted (0,.1mm));
 label.bot("63..34" infont "rm-mlmr9",  .5[point 0 of car,point 1 of car]);
-label.top("next" infont "rm-mlmri9", .5[point 0 of cdr,point 1 of cdr]);
+label.top("next" infont "rm-mlmri9", .5[point 0 of cdr,point 1 of cdr] shifted (0,.1mm));
 label.bot("33..2" infont "rm-mlmr9",  .5[point 0 of cdr,point 1 of cdr]);
 label.top("11" infont "rm-mlmtt8", .5[point 0 of tag,point 1 of tag]);
 label.bot("1..0" infont "rm-mlmr9",   .5[point 0 of tag,point 1 of tag]);
