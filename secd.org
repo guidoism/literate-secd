@@ -90,14 +90,6 @@ GUIDO: The macro |number| was temporarily moved to Allocate Cells and converted 
 @d mksymbol(h, t) (cell){((((uint64_t)h) << 33) | (((uint64_t)t & 0x7fffffff) << 2) | 0b11)}
 @d issymbol(c)    ((c.val & 0b11) == 0b11)
 
-@ Allocate Cells
-
-@d limit 65536
-       
-@<Allocate Cells@>=
-
-<<Allocate Cells>>
-         
 @ Cell Initialization. During initialization we turn all unused memory
 into one long linked list of cons cells. We keep track of the head of
 this list with the |f| register.
@@ -115,6 +107,16 @@ one, not by 8, so we gain an extra 3 bits of address space.
 
 <<Cell Initialization>>       
 
+@ Allocate Cells. We arbitrarily set the size of memory to 65536 cells but
+  we have 31 bits available so we could just as easily increase |limit| to
+  $2^{31}$.
+
+@d limit 65536
+       
+@<Allocate Cells@>=
+
+<<Allocate Cells>>
+         
 @ Instructions. There are 21 instructions as sumerized by this table.
 We will go through each one describing the operational semantics
 abstractly and provide examples that we will also use to validate
