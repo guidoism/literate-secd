@@ -69,10 +69,11 @@ They each follow a similar pattern: mask\rightarrow shift\rightarrow tag.
            
 @ Numbers. We use 62-bit signed integers. Overflow behavior is undefined
   for now.
+
+GUIDO: The macro |number| was temporarily moved to Allocate Cells and converted to a function.
    
 @d mknumber(n)  (((cell)n) << 2)
 @d isnumber(c)  ((c & 0b11) == 0b00)
-@d number(i)    ((int64_t)(mem[i]) >> 2)
 
 @ Conses. We store two 31-bit indicies.
    
@@ -1353,6 +1354,10 @@ https://tug.org/fonts/fontinstall.html
 #+begin_src c
 cell mem[limit];
 index f; // free list
+
+int64_t number(index i) @+ {
+    return (int64_t)(mem[i]) >> 2;
+}
 
 index addcell(cell c) @+ {
     index w = f;      // Get the next free cell index
