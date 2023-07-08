@@ -70,13 +70,13 @@ They each follow a similar pattern: mask\rightarrow shift\rightarrow tag.
 @ Numbers. We use 62-bit signed integers. Overflow behavior is undefined
   for now.
    
-@d mknumber(n)    (((cell)n) << 2)
+@d mknumber(n)  (((cell)n) << 2)
 @d isnumber(c)  ((c & 0b11) == 0b00)
-@d number(i) ((int64_t)(mem[i]) >> 2)
+@d number(i)    ((int64_t)(mem[i]) >> 2)
 
 @ Conses. We store two 31-bit indicies.
    
-@d mkcons(h, t)   (((cell)h << 33) | (((cell)t & 0x7fffffff) << 2) | 0b01)
+@d mkcons(h, t) (((cell)h << 33) | (((cell)t & 0x7fffffff) << 2) | 0b01)
 @d iscons(c)    ((c & 0b11) == 0b01)
 @d head(c)      (c >> 33)
 @d tail(c)      ((c >> 2) & 0x7fffffff)
@@ -87,7 +87,7 @@ They each follow a similar pattern: mask\rightarrow shift\rightarrow tag.
   character. We could for examplee store up to four 7-bit ASCII characters.
    
 @d mksymbol(h, t) ((((cell)h | 0x80000000) << 33) | (((cell)t & 0x7fffffff) << 2) | 0b11)
-@d issymbol(c)  ((c & 0b11) == 0b11)
+@d issymbol(c)    ((c & 0b11) == 0b11)
 
 @ Allocate Cells
 
