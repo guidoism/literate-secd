@@ -87,7 +87,7 @@ GUIDO: The macro |number| was temporarily moved to Allocate Cells and converted 
   for the character and nothing prevents us from stuffing in more than one
   character. We could for examplee store up to four 7-bit ASCII characters.
    
-@d mksymbol(h, t) (cell){((((uint64_t)h | 0x80000000) << 33) | (((uint64_t)t & 0x7fffffff) << 2) | 0b11)}
+@d mksymbol(h, t) (cell){((((uint64_t)h) << 33) | (((uint64_t)t & 0x7fffffff) << 2) | 0b11)}
 @d issymbol(c)    ((c.val & 0b11) == 0b11)
 
 @ Allocate Cells
