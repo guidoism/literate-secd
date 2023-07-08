@@ -1355,10 +1355,6 @@ https://tug.org/fonts/fontinstall.html
 cell mem[limit];
 index f; // free list
 
-int64_t getnumber(index i) @+ {
-    return (int64_t)(mem[i].val) >> 2;
-}
-
 int64_t getnumber2(cell c) @+ {
     return (int64_t)(c.val) >> 2;
 }
@@ -1607,8 +1603,8 @@ f = 1;
 #+begin_src c
 index locate(index pair) @+ {
     // This all assumes head and tail return an index
-    int64_t frame    = getnumber(head(mem[pair]));
-    int64_t position = getnumber(tail(mem[pair])); // Is ordinal a better name?
+    int64_t frame    = getnumber2(mem[head(mem[pair])]);
+    int64_t position = getnumber2(mem[tail(mem[pair])]); // Is ordinal a better name?
     index w = e;                              // 0. Start at the top of the environment
     while (frame-- > 0) w = tail(mem[w]);     // 1. walk to the correct frame
     w = head(mem[w]);                         // 2. step onto the frame's list
@@ -1737,7 +1733,7 @@ void cons(void) @+ {
 void eq(void) @+ {
     index x = pops();
     index y = pops();
-    bool b = x == y || getnumber(x) == getnumber(y);
+    bool b = x == y || getnumber2(mem[x]) == getnumber2(mem[y]);
     s = addcons(b ? T : F, s);
 }
 #+end_src
@@ -1747,8 +1743,8 @@ void eq(void) @+ {
 #+name: ADD Instruction
 #+begin_src c
 void add(void) @+ {
-    int64_t x = getnumber(pops());
-    int64_t y = getnumber(pops());
+    int64_t x = getnumber2(mem[pops()]);
+    int64_t y = getnumber2(mem[pops()]);
     s = addcons(addcell(mknumber(x + y)), s);
 }
 #+end_src
@@ -1758,8 +1754,8 @@ void add(void) @+ {
 #+name: SUB Instruction
 #+begin_src c
 void sub(void) @+ {
-    int64_t x = getnumber(pops());
-    int64_t y = getnumber(pops());
+    int64_t x = getnumber2(mem[pops()]);
+    int64_t y = getnumber2(mem[pops()]);
     s = addcons(addcell(mknumber(y - x)), s);
 }
 #+end_src
@@ -1769,8 +1765,8 @@ void sub(void) @+ {
 #+name: MUL Instruction
 #+begin_src c
 void mul(void) @+ {
-    int64_t x = getnumber(pops());
-    int64_t y = getnumber(pops());
+    int64_t x = getnumber2(mem[pops()]);
+    int64_t y = getnumber2(mem[pops()]);
     s = addcons(addcell(mknumber(x * y)), s);
 }
 #+end_src
@@ -1780,8 +1776,8 @@ void mul(void) @+ {
 #+name: DIV Instruction
 #+begin_src c
 void div(void) @+ {
-    int64_t x = getnumber(pops());
-    int64_t y = getnumber(pops());
+    int64_t x = getnumber2(mem[pops()]);
+    int64_t y = getnumber2(mem[pops()]);
     s = addcons(addcell(mknumber(y / x)), s);
 }
 #+end_src
@@ -1791,8 +1787,8 @@ void div(void) @+ {
 #+name: REM Instruction
 #+begin_src c
 void rem(void) @+ {
-    int64_t x = getnumber(pops());
-    int64_t y = getnumber(pops());
+    int64_t x = getnumber2(mem[pops()]);
+    int64_t y = getnumber2(mem[pops()]);
     s = addcons(addcell(mknumber(y % x)), s);
 }
 #+end_src
@@ -1804,7 +1800,7 @@ void rem(void) @+ {
 void leq(void) @+ {
     index x = pops();
     index y = pops();
-    bool b = getnumber(y) <= getnumber(x);
+    bool b = getnumber2(mem[y]) <= getnumber2(mem[x]);
     s = addcons(b ? T : F, s);
 }
 #+end_src
