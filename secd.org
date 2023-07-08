@@ -40,10 +40,10 @@ time for saving the values of the \Stack, \Environment, and \Control\
 registers while they are being used with different values inside of
 a function call.
 
-@d cell uint64_t
 @d index uint32_t
 
 @<S.E.C.D. Registers@>=
+typedef struct { uint64_t val; } cell;
 index s, e, c, d;
 
 @ Cells. The memory in this machine is divided up into 64-bit tagged
@@ -72,23 +72,23 @@ They each follow a similar pattern: mask\rightarrow shift\rightarrow tag.
 
 GUIDO: The macro |number| was temporarily moved to Allocate Cells and converted to a function.
    
-@d mknumber(n)  (((cell)n) << 2)
-@d isnumber(c)  ((c & 0b11) == 0b00)
+@d mknumber(n)  (cell){(((uint64_t)n) << 2)}
+@d isnumber(c)  ((c.val & 0b11) == 0b00)
 
 @ Conses. We store two 31-bit indicies.
    
-@d mkcons(h, t) (((cell)h << 33) | (((cell)t & 0x7fffffff) << 2) | 0b01)
-@d iscons(c)    ((c & 0b11) == 0b01)
-@d head(c)      (c >> 33)
-@d tail(c)      ((c >> 2) & 0x7fffffff)
+@d mkcons(h, t) (cell){(((uint64_t)h << 33) | (((uint64_t)t & 0x7fffffff) << 2) | 0b01)}
+@d iscons(c)    ((c.val & 0b11) == 0b01)
+@d head(c)      (c.val >> 33)
+@d tail(c)      ((c.val >> 2) & 0x7fffffff)
 
 @ Symbols. These are lists of characters where the head is character and
   the tail is a pointer to the next character. We have 31 bits available
   for the character and nothing prevents us from stuffing in more than one
   character. We could for examplee store up to four 7-bit ASCII characters.
    
-@d mksymbol(h, t) ((((cell)h | 0x80000000) << 33) | (((cell)t & 0x7fffffff) << 2) | 0b11)
-@d issymbol(c)    ((c & 0b11) == 0b11)
+@d mksymbol(h, t) (cell){((((uint64_t)h | 0x80000000) << 33) | (((uint64_t)t & 0x7fffffff) << 2) | 0b11)}
+@d issymbol(c)    ((c.val & 0b11) == 0b11)
 
 @ Allocate Cells
 
@@ -581,13 +581,13 @@ void print_sexp(index i) @+ {
         printf(" ");
         if (tail(c)) print_sexp(tail(c));
     }
-    else printf(" %lld ", getnumber(c));
+    else printf(" %lld ", getnumber2(c));
 
 }
         
 @* Appendix.
 
-@d deref_number_from_cell(c) ((int64_t)c >> 2)
+@d deref_number_from_cell(c) ((int64_t)c.val >> 2)
 
 @<Validate Implementation@>=
 
@@ -643,8 +643,8 @@ void validate_atom_implementation(void) @+ {
     f = 9;
     index w = popc();
     printf("GUIDO: index w = %u\n", w);
-    printf("GUIDO: mem[w] = %llu\n", mem[w]);
-    printf("GUIDO: mem[w] >> 2 = %llu\n", mem[w] >> 2);
+    printf("GUIDO: mem[w] = %llu\n", mem[w].val);
+    printf("GUIDO: mem[w] >> 2 = %llu\n", mem[w].val >> 2);
     assert(getnumber(w) == 12); // ATOM
     atom();
     assert(head(mem[s]) == F);
@@ -1359,11 +1359,11 @@ cell mem[limit];
 index f; // free list
 
 int64_t getnumber(index i) @+ {
-    return (int64_t)(mem[i]) >> 2;
+    return (int64_t)(mem[i].val) >> 2;
 }
 
 int64_t getnumber2(cell c) @+ {
-    return (int64_t)(c) >> 2;
+    return (int64_t)(c.val) >> 2;
 }
 
 index addcell(cell c) @+ {
@@ -1508,8 +1508,8 @@ for vin, vout, cell, notes in number_examples[1:]:
 
 #+RESULTS:
 #+begin_example
-    assert(mkcons(0, 0xffff'ffff) == 0x00000001fffffffd); // Numbers are truncated to 31 bits
-    assert(mkcons(0xffff'ffff, 0) == 0xfffffffe00000001); // Numbers are truncated to 31 bits
+    assert(mkcons(0, 0xffff'ffff).val == 0x00000001fffffffd); // Numbers are truncated to 31 bits
+    assert(mkcons(0xffff'ffff, 0).val == 0xfffffffe00000001); // Numbers are truncated to 31 bits
     assert(mknumber(0) == 0x0000000000000000 && "Zero");
     assert(deref_number_from_cell(mknumber(0)) == 0 && "Zero");
     assert(mknumber(-1) == 0xfffffffffffffffc && "Negative numbers are represeted properly");
@@ -1543,17 +1543,17 @@ void validate_cell_implementation(void) @+ {
     assert(isnumber(mknumber(0)));
     assert(issymbol(mksymbol('A', 0)));
     ///////////////////
-    assert(mkcons(0, 0xffff'ffff) == 0x00000001fffffffd); // Numbers are truncated to 31 bits
-    assert(mkcons(0xffff'ffff, 0) == 0xfffffffe00000001); // Numbers are truncated to 31 bits
-    assert(mknumber(0) == 0x0000000000000000 && "Zero");
+    assert(mkcons(0, 0xffff'ffff).val == 0x00000001fffffffd); // Numbers are truncated to 31 bits
+    assert(mkcons(0xffff'ffff, 0).val == 0xfffffffe00000001); // Numbers are truncated to 31 bits
+    assert(mknumber(0).val == 0x0000000000000000 && "Zero");
     assert(deref_number_from_cell(mknumber(0)) == 0 && "Zero");
-    assert(mknumber(-1) == 0xfffffffffffffffc && "Negative numbers are represeted properly");
+    assert(mknumber(-1).val == 0xfffffffffffffffc && "Negative numbers are represeted properly");
     assert(deref_number_from_cell(mknumber(-1)) == -1 && "Negative numbers are represeted properly");
-    assert(mknumber(2305843009213693951) == 0x7ffffffffffffffc && "Most positive number");
+    assert(mknumber(2305843009213693951).val == 0x7ffffffffffffffc && "Most positive number");
     assert(deref_number_from_cell(mknumber(2305843009213693951)) == 2305843009213693951 && "Most positive number");
-    assert(mknumber(-2305843009213693952) == 0x8000000000000000 && "Most negative number");
+    assert(mknumber(-2305843009213693952).val == 0x8000000000000000 && "Most negative number");
     assert(deref_number_from_cell(mknumber(-2305843009213693952)) == -2305843009213693952 && "Most negative number");
-    assert(mknumber(2305843009213693952) == 0x8000000000000000 && "Most positive number + 1 gets truncated");
+    assert(mknumber(2305843009213693952).val == 0x8000000000000000 && "Most positive number + 1 gets truncated");
     assert(deref_number_from_cell(mknumber(2305843009213693952)) == -2305843009213693952 && "Most positive number + 1 gets truncated");
 }
 #+end_src
@@ -1597,7 +1597,7 @@ void dump_sexp(index start) {
 for(int i = 0; i < limit; i++) @+ {
     mem[i] = mkcons(0, (i+1)%limit); // Modulo math! Last cell gets a 0 as the tail
 }
-mem[NIL] = 0;
+mem[NIL] = (cell){0};
 mem[F] = mksymbol('F', NIL);
 mem[T] = mksymbol('T', NIL);
 f = 1;
