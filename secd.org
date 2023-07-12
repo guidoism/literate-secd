@@ -63,7 +63,8 @@ which we place on the rightmost end of the word.
 
 For each cell type we will define macros to 1. Create a cell from parts,
 2. Test whether the cell is of a particular type, and 3. Extract each
-of the parts. Each of these macros operate on a machine's 64-bit registers
+of the parts. From Kogge: Predicates, Selectors, Creators.
+Each of these macros operate on a machine's 64-bit registers
 --- they don't affect what is stored in the abstract machine's memory.
 They each follow a similar pattern: mask\rightarrow shift\rightarrow tag.    
            
@@ -519,6 +520,15 @@ endfig;
 @<STOP Instruction@>=
 <<STOP Instruction>>
 
+
+@ Discussion.       
+
+Our principles are: 1. We won't blindly follow the DRY principle.
+If the code is more clear being repeated then we will repeat it.
+Sometimes the pattern is better seen by seeing the repetition and
+differences. The |pop| functions could have been written with the
+following macro but we determined that it obscured understanding.
+       
 @ Futher Research.
 
   The code to build this paper is a mess. It's a mixture of Python, C,
