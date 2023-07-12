@@ -294,7 +294,7 @@ beginfig(4);
 picture pic;
 pic := currentpicture;
 currentpicture := nullpicture;
-draw pic shifted ((-dx*8),0);
+draw pic shifted (0,(-dy*5));
 <<make_figure(mem=sel-memory, positions=sel-after)>>
 endfig;
 \endmplibcode
@@ -1295,24 +1295,54 @@ luatex secd
 |   | 10 |   |
 
 #+name: sel-memory
-| addr | type | head | tail | val |
-|   21 | cons |   22 |    0 |     |
-|   22 | atom |      |      | LEQ |
-|    3 | cons |    6 |    4 |     |
-|    4 | cons |    7 |    0 |     |
-|    6 | atom |      |      |   5 |
-|    7 | atom |      |      |   7 |
-|   10 | atom |      |      |   f |
-|   11 | cons |   10 |    0 |     |
+| addr | type | head | tail | val  |
+|    3 | cons |    4 |    5 |      |
+|    4 | atom |      |      | LD   |
+|    5 | cons |    6 |    7 |      |
+|    6 | cons |   50 |   51 |      |
+|    7 | cons |    8 |    9 |      |
+|    8 | atom |      |      | SEL  |
+|    9 | cons |   10 |   16 |      |
+|   10 | cons |   11 |   12 |      |
+|   11 | atom |      |      | LD   |
+|   12 | cons |   13 |   14 |      |
+|   13 | cons |   52 |   53 |      |
+|   14 | cons |   15 |    0 |      |
+|   15 | atom |      |      | JOIN |
+|   16 | cons |   17 |   23 |      |
+|   17 | cons |   18 |   19 |      |
+|   18 | atom |      |      | LD   |
+|   19 | cons |   20 |   21 |      |
+|   20 | cons |   54 |   55 |      |
+|   21 | cons |   22 |    0 |      |
+|   22 | atom |      |      | JOIN |
+|   23 | cons |   24 |    0 |      |
+|   24 | atom |      |      | STOP |
+|   30 | cons |   31 |    0 |      |
+|   31 | cons |   32 |    0 |      |
+|   32 | cons |   33 |   34 |      |
+|   33 | atom |      |      | t    |
+|   34 | cons |   35 |   36 |      |
+|   35 | atom |      |      | A    |
+|   36 | cons |   37 |    0 |      |
+|   37 | atom |      |      | B    |
+|   38 | cons |   35 |    0 |      |
+|   50 | atom |      |      | 0    |
+|   51 | atom |      |      | 0    |
+|   52 | atom |      |      | 0    |
+|   53 | atom |      |      | 1    |
+|   54 | atom |      |      | 0    |
+|   55 | atom |      |      | 2    |
 
 #+name: sel-before
-| S | 3 | 4 | C | 21 |
-|   | 6 | 7 |   | 22 |
+| C | 3 |  5 |    | 7 |  9 |    |    |    | 16 |    |    |    | 23 | S | 30 |    |    |
+|   | 4 |  6 | 51 | 8 | 10 | 12 |    | 14 | 17 | 19 |    | 21 | 24 |   | 31 |    |    |
+|   |   | 50 |    |   | 11 | 13 | 53 | 15 | 18 | 20 | 55 | 22 |    |   | 32 | 34 | 36 |
+|   |   |    |    |   |    | 52 |    |    |    | 54 |    |    |    |   | 33 | 35 | 37 |
 
 #+name: sel-after
-| S | 11 |   |
-|   | 10 |   |
-
+| S | 38 |
+|   | 35 |
 
 ** CWEB File
 
