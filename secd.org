@@ -285,6 +285,21 @@ endfig;
 
 @ SEL Instruction.
   Operational semantics: $ (x.s)\ e\ (SEL\ c_t\ c_f.c)\ d \enspace\to\enspace s\ e\ c_x\ (c.d)$
+
+\medskip\medskip
+\mplibcode
+beginfig(4);
+<<metapost-graph-init>>
+<<make_figure(mem=sel-memory, positions=sel-before)>>
+picture pic;
+pic := currentpicture;
+currentpicture := nullpicture;
+draw pic shifted ((-dx*8),0);
+<<make_figure(mem=sel-memory, positions=sel-after)>>
+endfig;
+\endmplibcode
+\medskip\medskip
+            
 @<SEL Instruction@>=
 <<SEL Instruction>>
       
@@ -1278,6 +1293,26 @@ luatex secd
 #+name: leq-after
 | S | 11 |   |
 |   | 10 |   |
+
+#+name: sel-memory
+| addr | type | head | tail | val |
+|   21 | cons |   22 |    0 |     |
+|   22 | atom |      |      | LEQ |
+|    3 | cons |    6 |    4 |     |
+|    4 | cons |    7 |    0 |     |
+|    6 | atom |      |      |   5 |
+|    7 | atom |      |      |   7 |
+|   10 | atom |      |      |   f |
+|   11 | cons |   10 |    0 |     |
+
+#+name: sel-before
+| S | 3 | 4 | C | 21 |
+|   | 6 | 7 |   | 22 |
+
+#+name: sel-after
+| S | 11 |   |
+|   | 10 |   |
+
 
 ** CWEB File
 
