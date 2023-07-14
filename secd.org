@@ -612,6 +612,7 @@ int main(void) @+ {
     validate_rem_implementation();
     validate_leq_implementation();
     validate_stop_implementation();
+    validate_sel_implementation();    
 }
 
 @ Print S-Expressions Utility.
@@ -795,7 +796,18 @@ void validate_leq_implementation() @+ {
         
 void validate_stop_implementation() @+ {
 }
-        
+
+void validate_sel_implementation() @+ {
+    <<make_tests(mem=sel-memory, positions=sel-before)>>
+    s = 30;
+    e = 0;
+    c = 7;
+    f = 38;
+    index w = popc();
+    assert(getnumber2(mem[w]) == 8); // SEL
+    sel();
+}                              
+                
 #+end_src
 
 
@@ -1771,6 +1783,9 @@ void rtn(void) @+ {
 
 #+name: SEL Instruction
 #+begin_src c
+void sel(void) @+ {
+    
+}
 #+end_src
 
 *** JOIN Instruction
